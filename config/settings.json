@@ -1,0 +1,19 @@
+{
+  "alerts": {
+    "compact_threshold": 80000,
+    "handoff_threshold": 120000,
+    "protocol_threshold": 150000,
+    "inactivity_timeout": 30
+  },
+  "customAction": {
+    "name": "Capture to Brain",
+    "endpoint_url": "",
+    "api_key_env_var": "CAPTURE_API_KEY"
+  },
+  "brand": {
+    "theme_mode": "ADS",
+    "token_css_path": "",
+    "logo_path": "",
+    "primary_color": ""
+  }
+}
