@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { randomUUID } from 'crypto'
 import { readConfig, writeConfig } from './configManager.js'
+import { scanAllSessions } from './sessionScanner.js'
 
 const app = express()
 const PORT = 3001
@@ -55,6 +56,19 @@ app.delete('/api/projects/:id', (req, res) => {
   if (filtered.length === projects.length) return res.status(404).json({ error: 'Not found' })
   writeConfig('projects.json', filtered)
   res.status(204).end()
+})
+
+// ── Sessions ──────────────────────────────────────────────
+
+app.get('/api/sessions', (req, res) => {
+  const projects = readConfig('projects.json')
+  try {
+    const result = scanAllSessions(projects)
+    res.json(result)
+  } catch (err) {
+    console.error('sessionScanner error:', err)
+    res.status(500).json({ error: 'Session scan failed', sessions: [], summary: {} })
+  }
 })
 
 // ── Settings ──────────────────────────────────────────────

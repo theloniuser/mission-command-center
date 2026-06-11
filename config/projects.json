@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "6ae12eb2-b997-4f95-aa7c-03d8ead688b6",
+    "name": "ADS-skills",
+    "path": "~/ai-cli-projects/00-ADS-MASTER/ADS-skills",
+    "launch_command": "",
+    "beads_ids": [],
+    "color": "#ff7f00"
+  },
+  {
+    "id": "31730229-5ee3-40b6-aaca-9c978cf6c0ce",
+    "name": "ads-command-center",
+    "path": "/Users/jamescantwell/ai-cli-projects/00-ADS-MASTER/ADS-skills/ads-command-center",
+    "launch_command": "npm run dev",
+    "beads_ids": [],
+    "color": "#339fd9"
+  }
+]

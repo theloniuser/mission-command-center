@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext.jsx'
+import { useSession } from '../../context/SessionContext.jsx'
 
-export default function Header({ stats }) {
+export default function Header() {
   const { theme, toggleTheme } = useTheme()
+  const { stats } = useSession()
 
   return (
     <header className="site-header">
@@ -34,15 +36,15 @@ export default function Header({ stats }) {
       <div className="summary-bar">
         <div className="summary-bar-inner">
           <span className="summary-stat">
-            <strong>{stats?.sessions ?? '—'}</strong> sessions active
+            <strong>{stats?.sessions_active ?? '—'}</strong> sessions active
           </span>
           <span className="summary-divider" />
           <span className="summary-stat">
-            <strong>{stats?.mcps ?? '—'}</strong> MCPs engaged
+            <strong>{stats?.mcps_engaged ?? '—'}</strong> MCPs engaged
           </span>
           <span className="summary-divider" />
           <span className="summary-stat">
-            <strong>${stats?.spend ?? '—'}</strong> today
+            <strong>${stats?.spend_today ?? '—'}</strong> today
           </span>
         </div>
       </div>

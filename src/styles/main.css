@@ -350,6 +350,10 @@ body {
   white-space: nowrap;
 }
 
+.tile-status-badge.status-active { color: var(--color-blue); }
+.tile-status-badge.status-idle   { color: var(--hub-text-fade); }
+.tile-status-badge.status-closed { color: var(--hub-text-fade); opacity: 0.5; }
+
 .tile-meta {
   display: flex;
   align-items: center;
@@ -401,6 +405,47 @@ body {
   height: 12px;
   background: var(--hub-divider);
   border-radius: 1px;
+}
+
+/* MCP badges */
+.tile-mcps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--space-2);
+}
+
+.mcp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-label);
+  padding: 2px 6px;
+  border-radius: var(--radius-md);
+  background: var(--hub-surface-h);
+  color: var(--hub-text-fade);
+  border: 1px solid var(--hub-border);
+  cursor: default;
+  white-space: nowrap;
+}
+
+.mcp-badge::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mcp-engaged::before { background: var(--color-blue); }
+.mcp-idle::before    { background: var(--hub-text-fade); opacity: 0.4; }
+
+/* Session spend */
+.tile-spend {
+  font-size: var(--font-size-label);
+  color: var(--hub-text-fade);
+  text-align: right;
+  margin-top: var(--space-2);
 }
 
 /* ── Settings page ── */
