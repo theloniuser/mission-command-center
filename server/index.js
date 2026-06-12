@@ -185,6 +185,20 @@ app.get('/api/brand-asset', (req, res) => {
   createReadStream(assetPath).pipe(res)
 })
 
+// ── Folder picker (macOS) ─────────────────────────────────
+
+app.post('/api/browse-folder', async (req, res) => {
+  try {
+    const { execSync } = await import('child_process')
+    const path = execSync("osascript -e 'POSIX path of (choose folder)'", { timeout: 30000 })
+      .toString().trim()
+    res.json({ path })
+  } catch (err) {
+    if (err.status === 1) return res.json({ path: null }) // user cancelled
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ── Settings ──────────────────────────────────────────────
 
 app.get('/api/settings', (req, res) => {

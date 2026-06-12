@@ -4,12 +4,23 @@ const EMPTY_FORM = { name: '', path: '', launch_command: '' }
 
 export default function ProjectsConfig({ projects, onRefresh }) {
   const [form, setForm] = useState(EMPTY_FORM)
+  const [browsing, setBrowsing] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
   function handleChange(e) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  }
+
+  async function handleBrowse() {
+    setBrowsing(true)
+    try {
+      const res = await fetch('/api/browse-folder', { method: 'POST' })
+      const data = await res.json()
+      if (data.path) setForm(f => ({ ...f, path: data.path.replace(/\/$/, '') }))
+    } catch {}
+    setBrowsing(false)
   }
 
   async function handleSubmit(e) {
@@ -110,14 +121,24 @@ export default function ProjectsConfig({ projects, onRefresh }) {
             </div>
             <div className="form-group">
               <label>Path</label>
-              <input
-                className="form-input"
-                name="path"
-                value={form.path}
-                onChange={handleChange}
-                placeholder="~/ai-cli-projects/..."
-                required
-              />
+              <div className="form-input-row">
+                <input
+                  className="form-input"
+                  name="path"
+                  value={form.path}
+                  onChange={handleChange}
+                  placeholder="~/ai-cli-projects/..."
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleBrowse}
+                  disabled={browsing}
+                >
+                  {browsing ? '...' : 'Browse'}
+                </button>
+              </div>
             </div>
           </div>
           <div className="form-group">
