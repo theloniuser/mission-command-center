@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import McpBadge from './McpBadge.jsx'
+import { useAudio, SOUNDS } from '../../hooks/useAudio.js'
 
 const THRESHOLD_80K  = 80000
 const THRESHOLD_120K = 120000
@@ -28,6 +30,23 @@ export default function ProjectTile({ project }) {
 
   const mcps = project.mcps ?? []
   const spend = project.spend_usd != null ? `~$${project.spend_usd.toFixed(2)}` : null
+
+  const { play, getPrefs, savePrefs } = useAudio(project.id)
+  const audioPrefs = getPrefs()
+  const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
+  const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
+
+  function toggleAudio() {
+    const next = !audioEnabled
+    setAudioEnabled(next)
+    savePrefs({ enabled: next, sound: selectedSound })
+  }
+
+  function handleSoundChange(e) {
+    setSelectedSound(e.target.value)
+    savePrefs({ enabled: audioEnabled, sound: e.target.value })
+    play(e.target.value)
+  }
 
   return (
     <article className="project-tile">
@@ -73,6 +92,29 @@ export default function ProjectTile({ project }) {
         )}
 
         {spend && <div className="tile-spend">{spend}</div>}
+
+        <div className="tile-audio">
+          <button
+            className={`audio-toggle ${audioEnabled ? 'audio-on' : 'audio-off'}`}
+            onClick={toggleAudio}
+            title={audioEnabled ? 'Sound on' : 'Sound off'}
+            aria-label={audioEnabled ? 'Disable sound' : 'Enable sound'}
+          >
+            {audioEnabled ? 'on' : 'off'}
+          </button>
+          {audioEnabled && (
+            <select
+              className="audio-select"
+              value={selectedSound}
+              onChange={handleSoundChange}
+              title="Alert sound"
+            >
+              {SOUNDS.map(s => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
     </article>
   )

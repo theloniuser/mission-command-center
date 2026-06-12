@@ -726,4 +726,36 @@ html[data-theme="dark"] .eyebrow {
   padding: 2px 4px;
   border-radius: 3px;
 }
+
+/* ── Tile audio controls ─────────────────────────────────── */
+.tile-audio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.audio-toggle {
+  font-size: 11px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid var(--hub-btn-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  color: var(--hub-text-fade);
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.audio-toggle.audio-on  { color: var(--color-orange-ui); border-color: var(--color-orange-ui); }
+.audio-toggle:hover { opacity: 0.8; }
+.audio-select {
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid var(--hub-btn-border);
+  background: var(--hub-surface);
+  color: var(--hub-text);
+  cursor: pointer;
+}
 .toast-dismiss:hover { background: var(--hub-btn-bg); }
