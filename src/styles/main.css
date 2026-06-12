@@ -759,3 +759,55 @@ html[data-theme="dark"] .eyebrow {
   cursor: pointer;
 }
 .toast-dismiss:hover { background: var(--hub-btn-bg); }
+
+/* ── Beads sidebar panel ─────────────────────────────────── */
+.beads-panel       { display: flex; flex-direction: column; gap: 0; overflow-y: auto; }
+.bead-group        { border-bottom: 1px solid var(--hub-divider); }
+.bead-group-header {
+  padding: 8px 12px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hub-text-fade);
+}
+.bead-item {
+  padding: 7px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-bottom: 1px solid var(--hub-divider);
+}
+.bead-item:last-child { border-bottom: none; }
+.bead-main  { display: flex; align-items: flex-start; gap: 7px; }
+.bead-priority {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.bead-priority.p1 { background: var(--color-orange); color: var(--color-white); }
+.bead-priority.p2 { background: var(--color-blue); color: var(--color-white); }
+.bead-priority.p3 { background: var(--hub-btn-bg); color: var(--hub-text-fade); }
+.bead-title {
+  font-size: 12px;
+  color: var(--hub-text);
+  line-height: 1.4;
+}
+.bead-actions { display: flex; gap: 5px; }
+.bead-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--hub-btn-border);
+  background: var(--hub-btn-bg);
+  color: var(--hub-text);
+  cursor: pointer;
+}
+.bead-btn:hover { background: var(--hub-btn-hover); }
+.bead-launch { border-color: var(--color-orange-ui); color: var(--color-orange-ui); }
+.bead-launch:hover { background: var(--color-orange-ui); color: var(--color-white); }
+.sidebar-error { color: var(--color-orange); }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import BeadsPanel from '../sidebar/BeadsPanel.jsx'
 
-export default function Sidebar() {
+export default function Sidebar({ onNewSession }) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
@@ -10,9 +11,7 @@ export default function Sidebar() {
           <div className="sidebar-header">
             <span className="sidebar-title">Backlog</span>
           </div>
-          <p className="sidebar-empty">
-            Backlog panel available in Milestone 3.
-          </p>
+          <BeadsPanel onNewSession={onNewSession} />
         </div>
       </aside>
 
@@ -22,7 +21,7 @@ export default function Sidebar() {
         aria-label={collapsed ? 'Open sidebar' : 'Close sidebar'}
         title={collapsed ? 'Open sidebar' : 'Close sidebar'}
       >
-        {collapsed ? '◂' : '▸'}
+        {collapsed ? '<' : '>'}
       </button>
     </>
   )
