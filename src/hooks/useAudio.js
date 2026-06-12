@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 export const SOUNDS = [
   { id: 'chime',    label: 'Chime'  },
@@ -75,7 +75,8 @@ export function useAudio(projectId) {
   }
 
   const play = useCallback((soundId) => {
-    const prefs = getPrefs()
+    let prefs = {}
+    try { prefs = JSON.parse(localStorage.getItem(`audio-${projectId}`) || '{}') } catch {}
     if (prefs.enabled === false) return
     if (!ctxRef.current || ctxRef.current.state === 'closed') {
       ctxRef.current = new AudioContext()
@@ -83,6 +84,14 @@ export function useAudio(projectId) {
     if (ctxRef.current.state === 'suspended') ctxRef.current.resume()
     synthesize(ctxRef.current, soundId || prefs.sound || 'chime')
   }, [projectId])
+
+  useEffect(() => {
+    return () => {
+      if (ctxRef.current && ctxRef.current.state !== 'closed') {
+        ctxRef.current.close()
+      }
+    }
+  }, [])
 
   return { play, getPrefs, savePrefs }
 }

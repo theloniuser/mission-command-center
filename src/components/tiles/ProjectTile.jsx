@@ -47,7 +47,7 @@ export default function ProjectTile({ project }) {
       if (prefs.enabled !== false) play(prefs.sound || 'chime')
     }
     prevAlertCountRef.current = myAlerts.length
-  }, [alerts, project.id])
+  }, [alerts, project.id, play, getPrefs])
 
   function toggleAudio() {
     const next = !audioEnabled
