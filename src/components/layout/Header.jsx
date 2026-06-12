@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext.jsx'
 import { useSession } from '../../context/SessionContext.jsx'
 
-export default function Header() {
+export default function Header({ onBrainCapture }) {
   const { theme, toggleTheme } = useTheme()
   const { stats } = useSession()
 
@@ -22,6 +22,14 @@ export default function Header() {
             <NavLink to="/" end>Dashboard</NavLink>
             <NavLink to="/settings">Settings</NavLink>
           </nav>
+          <button
+            className="header-brain-btn"
+            onClick={onBrainCapture}
+            title="Capture to Brain"
+            aria-label="Capture to Brain"
+          >
+            Brain
+          </button>
           <button
             className="theme-toggle"
             id="themeToggle"
