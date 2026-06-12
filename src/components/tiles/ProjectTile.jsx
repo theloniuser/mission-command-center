@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import McpBadge from './McpBadge.jsx'
 import { useAudio, SOUNDS } from '../../hooks/useAudio.js'
+import { useSession } from '../../context/SessionContext.jsx'
 
 const THRESHOLD_80K  = 80000
 const THRESHOLD_120K = 120000
@@ -35,6 +36,18 @@ export default function ProjectTile({ project }) {
   const audioPrefs = getPrefs()
   const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
   const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
+
+  const { alerts } = useSession()
+  const prevAlertCountRef = useRef(0)
+
+  useEffect(() => {
+    const myAlerts = alerts.filter(a => a.projectId === project.id)
+    if (myAlerts.length > prevAlertCountRef.current) {
+      const prefs = getPrefs()
+      if (prefs.enabled !== false) play(prefs.sound || 'chime')
+    }
+    prevAlertCountRef.current = myAlerts.length
+  }, [alerts, project.id])
 
   function toggleAudio() {
     const next = !audioEnabled

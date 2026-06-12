@@ -9,7 +9,7 @@ const STATUS_ORDER = { active: 0, idle: 1, closed: 2 }
 export default function Dashboard() {
   const [projects, setProjects] = useState([])
   const [projLoading, setProjLoading] = useState(true)
-  const { sessions, loading: sessLoading } = useSession()
+  const { sessions, loading: sessLoading, openLauncher } = useSession()
 
   useEffect(() => {
     fetch('/api/projects')
@@ -62,7 +62,7 @@ export default function Dashboard() {
         )}
       </main>
 
-      <Sidebar />
+      <Sidebar onNewSession={openLauncher} />
     </div>
   )
 }
