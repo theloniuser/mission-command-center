@@ -811,3 +811,64 @@ html[data-theme="dark"] .eyebrow {
 .bead-launch { border-color: var(--color-orange-ui); color: var(--color-orange-ui); }
 .bead-launch:hover { background: var(--color-orange-ui); color: var(--color-white); }
 .sidebar-error { color: var(--color-orange); }
+
+/* ── Modals ──────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 900;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-panel {
+  background: var(--hub-surface);
+  border: 1px solid var(--hub-border);
+  border-radius: 10px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--hub-divider);
+}
+.modal-title { font-size: 15px; font-weight: 600; color: var(--hub-text); margin: 0; }
+.modal-close {
+  font-size: 14px; background: none; border: none;
+  color: var(--hub-text-fade); cursor: pointer; padding: 2px 6px;
+  border-radius: 4px;
+}
+.modal-close:hover { background: var(--hub-btn-bg); }
+.modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.modal-field { display: flex; flex-direction: column; gap: 5px; }
+.modal-field span {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--hub-text-fade);
+}
+.modal-field select,
+.modal-field input {
+  padding: 7px 10px; border-radius: 5px;
+  border: 1px solid var(--hub-btn-border);
+  background: var(--hub-bg);
+  color: var(--hub-text); font-size: 13px;
+}
+.modal-error { color: var(--color-orange); font-size: 12px; margin: 0; }
+.modal-footer {
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--hub-divider);
+}
+.modal-btn-cancel {
+  padding: 7px 16px; border-radius: 5px; font-size: 13px;
+  border: 1px solid var(--hub-btn-border); background: var(--hub-btn-bg);
+  color: var(--hub-text); cursor: pointer;
+}
+.modal-btn-cancel:hover { background: var(--hub-btn-hover); }
+.modal-btn-primary {
+  padding: 7px 16px; border-radius: 5px; font-size: 13px;
+  background: var(--color-orange-ui); color: var(--color-white);
+  border: none; cursor: pointer; font-weight: 600;
+}
+.modal-btn-primary:hover { opacity: 0.9; }
+.modal-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
