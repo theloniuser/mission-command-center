@@ -13,10 +13,7 @@
   --hub-btn-text:      var(--color-charcoal);
   --hub-btn-text-fade: rgba(60, 61, 60, 0.62);
   --hub-btn-hover:     rgba(60, 61, 60, 0.04);
-  --hub-toast-bg:      var(--color-charcoal);
-  --hub-toast-text:    var(--color-white);
   --hub-focus-ring:    0 0 0 2px rgba(183, 91, 0, 0.12);
-  --hub-shadow-toast:  0 2px 10px rgba(0, 0, 0, 0.15);
   --hub-shadow-modal:  0 8px 32px rgba(0, 0, 0, 0.20);
   --hub-overlay:       rgba(0, 0, 0, 0.45);
 }
@@ -35,8 +32,6 @@ html[data-theme="dark"] {
   --hub-btn-text:      rgba(255, 255, 255, 0.85);
   --hub-btn-text-fade: rgba(255, 255, 255, 0.55);
   --hub-btn-hover:     rgba(255, 255, 255, 0.06);
-  --hub-toast-bg:      var(--color-white);
-  --hub-toast-text:    var(--color-charcoal);
 }
 
 html[data-theme="dark"] .site-texture {
@@ -73,8 +68,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1200px;
-  margin: 0 auto;
   padding: var(--space-3) var(--space-6);
   position: relative;
   z-index: 1;
@@ -153,8 +146,6 @@ body {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  max-width: 1200px;
-  margin: 0 auto;
   font-size: var(--font-size-small);
   color: var(--hub-text-fade);
 }
@@ -189,8 +180,7 @@ body {
 }
 
 .page-heading {
-  max-width: 1200px;
-  margin: 0 auto var(--space-5);
+  margin: 0 0 var(--space-5);
 }
 
 .page-heading h1 {
@@ -266,8 +256,6 @@ body {
 
 /* ── Tile grid ── */
 .tile-grid {
-  max-width: 1200px;
-  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: var(--space-4);
@@ -681,45 +669,40 @@ html[data-theme="dark"] .eyebrow {
   color: var(--color-white);
 }
 
-/* ── Toasts ─────────────────────────────────────────────────── */
-.toast-container {
-  position: fixed;
-  top: calc(var(--hub-header-height, 56px) + 12px);
-  right: 16px;
-  z-index: 1000;
+/* ── Tile inline alerts ──────────────────────────────────── */
+.tile-alerts {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-width: 340px;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
 }
-.toast {
+.tile-alert {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-md);
   border-left: 3px solid var(--color-orange);
-  background: var(--hub-surface);
-  box-shadow: var(--hub-shadow-toast);
-  font-size: 13px;
+  background: var(--hub-surface-h);
+  font-size: 12px;
   color: var(--hub-text);
 }
-.toast-critical { border-left-color: var(--color-charcoal); }
-.toast-info     { border-left-color: var(--color-blue); }
-.toast-message  { flex: 1; line-height: 1.4; }
-.toast-actions  { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-.toast-act {
+.tile-alert-critical { border-left-color: var(--color-charcoal); }
+.tile-alert-info     { border-left-color: var(--color-blue); }
+.tile-alert-msg      { flex: 1; line-height: 1.4; }
+.tile-alert-actions  { display: flex; gap: var(--space-1); align-items: center; flex-shrink: 0; }
+.tile-alert-act {
   font-size: 11px;
   font-family: var(--font-mono, monospace);
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-orange-ui);
   color: var(--color-orange-ui);
   background: transparent;
   cursor: pointer;
 }
-.toast-act:hover { background: var(--color-orange-ui); color: var(--color-white); }
-.toast-dismiss {
+.tile-alert-act:hover { background: var(--color-orange-ui); color: var(--color-white); }
+.tile-alert-dismiss {
   font-size: 12px;
   color: var(--hub-text-fade);
   background: none;
@@ -728,6 +711,7 @@ html[data-theme="dark"] .eyebrow {
   padding: 2px 4px;
   border-radius: var(--radius-sm);
 }
+.tile-alert-dismiss:hover { background: var(--hub-btn-bg); }
 
 /* ── Tile audio controls ─────────────────────────────────── */
 .tile-audio {
@@ -760,7 +744,6 @@ html[data-theme="dark"] .eyebrow {
   color: var(--hub-text);
   cursor: pointer;
 }
-.toast-dismiss:hover { background: var(--hub-btn-bg); }
 
 /* ── Beads sidebar panel ─────────────────────────────────── */
 .beads-panel       { display: flex; flex-direction: column; gap: 0; overflow-y: auto; }

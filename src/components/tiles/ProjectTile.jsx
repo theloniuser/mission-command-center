@@ -39,17 +39,22 @@ export default function ProjectTile({ project }) {
   const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
   const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
 
-  const { alerts } = useSession()
+  const { alerts, dismiss } = useSession()
+  const myAlerts = alerts.filter(a => a.projectId === project.id)
   const prevAlertCountRef = useRef(0)
 
   useEffect(() => {
-    const myAlerts = alerts.filter(a => a.projectId === project.id)
     if (myAlerts.length > prevAlertCountRef.current) {
       const prefs = getPrefs()
       if (prefs.enabled !== false) play(prefs.sound || 'chime')
     }
     prevAlertCountRef.current = myAlerts.length
-  }, [alerts, project.id, play, getPrefs])
+  }, [myAlerts.length, play, getPrefs])
+
+  function handleAlertAct(alert) {
+    if (alert.action) navigator.clipboard.writeText(alert.action)
+    dismiss(alert.id)
+  }
 
   function toggleAudio() {
     const next = !audioEnabled
@@ -107,6 +112,24 @@ export default function ProjectTile({ project }) {
         )}
 
         {spend && <div className="tile-spend">{spend}</div>}
+
+        {myAlerts.length > 0 && (
+          <div className="tile-alerts">
+            {myAlerts.map(a => (
+              <div key={a.id} className={`tile-alert tile-alert-${a.type}`} role="alert">
+                <span className="tile-alert-msg">{(a.token_count / 1000 | 0) > 0 ? a.message : a.message}</span>
+                <div className="tile-alert-actions">
+                  {a.actionLabel && (
+                    <button className="tile-alert-act" onClick={() => handleAlertAct(a)}>
+                      {a.actionLabel}
+                    </button>
+                  )}
+                  <button className="tile-alert-dismiss" onClick={() => dismiss(a.id)} aria-label="Dismiss">x</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="tile-audio">
           <button

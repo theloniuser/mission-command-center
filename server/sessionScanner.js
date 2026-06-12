@@ -57,11 +57,11 @@ function extractMcpServer(toolName = '') {
   return parts[1] ? cleanServerName(parts[1]) : null
 }
 
-function scanSession(projectPath, projectId) {
+function scanSession(projectPath, projectId, projectName) {
   const dirName = pathToDirName(projectPath)
   const sessionDir = join(PROJECTS_DIR, dirName)
 
-  if (!existsSync(sessionDir)) return { projectId, status: 'closed' }
+  if (!existsSync(sessionDir)) return { projectId, projectName, status: 'closed' }
 
   let files
   try {
@@ -155,6 +155,7 @@ function scanSession(projectPath, projectId) {
 
   return {
     projectId,
+    projectName,
     status,
     model: formatModel(model),
     agent_type: 'Claude Code',
@@ -167,7 +168,7 @@ function scanSession(projectPath, projectId) {
 }
 
 export function scanAllSessions(projects) {
-  const sessions = projects.map(p => scanSession(p.path, p.id))
+  const sessions = projects.map(p => scanSession(p.path, p.id, p.name))
 
   const sessions_active = sessions.filter(s => s.status === 'active').length
   const mcps_engaged    = sessions.reduce((n, s) => n + (s.mcps?.filter(m => m.engaged).length ?? 0), 0)

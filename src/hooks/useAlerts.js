@@ -9,6 +9,7 @@ const THRESHOLD_MAP = [
 export function useAlerts(sessions, settings) {
   const [alerts, setAlerts] = useState([])
   const firedRef            = useRef(new Map())
+  const isInitialRef        = useRef(true)
   const inactivityMs        = (settings?.alerts?.inactivity_timeout ?? 30) * 60 * 1000
 
   useEffect(() => {
@@ -23,11 +24,13 @@ export function useAlerts(sessions, settings) {
       for (const { key, limit, action, label } of THRESHOLD_MAP) {
         if (session.token_count >= limit && !fired.has(key)) {
           fired.add(key)
-          newAlerts.push({
-            id: `${pid}-${key}-${now}`, projectId: pid,
-            message: `${session.projectName ?? pid.slice(0, 8)}: ${(session.token_count / 1000).toFixed(0)}K tokens`,
-            action, actionLabel: label, type: key === '80k' ? 'warn' : 'critical',
-          })
+          if (!isInitialRef.current) {
+            newAlerts.push({
+              id: `${pid}-${key}-${now}`, projectId: pid,
+              message: `${session.projectName ?? pid.slice(0, 8)}: ${(session.token_count / 1000).toFixed(0)}K tokens`,
+              action, actionLabel: label, type: key === '80k' ? 'warn' : 'critical',
+            })
+          }
         }
         if (session.token_count < limit * 0.5) fired.delete(key)
       }
@@ -47,6 +50,7 @@ export function useAlerts(sessions, settings) {
       firedRef.current.set(pid, fired)
     }
 
+    isInitialRef.current = false
     if (newAlerts.length) setAlerts(prev => [...prev, ...newAlerts])
   }, [sessions, inactivityMs])
 
