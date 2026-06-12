@@ -3,6 +3,7 @@ import cors from 'cors'
 import { randomUUID } from 'crypto'
 import { readConfig, writeConfig } from './configManager.js'
 import { scanAllSessions } from './sessionScanner.js'
+import { scanBeads } from './beadsScanner.js'
 
 const app = express()
 const PORT = 3001
@@ -68,6 +69,18 @@ app.get('/api/sessions', (req, res) => {
   } catch (err) {
     console.error('sessionScanner error:', err)
     res.status(500).json({ error: 'Session scan failed', sessions: [], summary: {} })
+  }
+})
+
+// ── Beads ─────────────────────────────────────────────────
+
+app.get('/api/beads', async (req, res) => {
+  try {
+    const result = await scanBeads()
+    res.json(result)
+  } catch (err) {
+    console.error('beadsScanner error:', err)
+    res.status(500).json({ groups: [] })
   }
 })
 
