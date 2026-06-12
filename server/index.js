@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import { readConfig, writeConfig } from './configManager.js'
 import { scanAllSessions } from './sessionScanner.js'
 import { scanBeads } from './beadsScanner.js'
+import { launchTerminal } from './terminalLauncher.js'
 
 const app = express()
 const PORT = 3001
@@ -81,6 +82,20 @@ app.get('/api/beads', async (req, res) => {
   } catch (err) {
     console.error('beadsScanner error:', err)
     res.status(500).json({ groups: [] })
+  }
+})
+
+// ── Launch ────────────────────────────────────────────────
+
+app.post('/api/launch', async (req, res) => {
+  const { projectPath, command } = req.body
+  if (!projectPath) return res.status(400).json({ error: 'projectPath required' })
+  try {
+    await launchTerminal(projectPath, command || 'claude')
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('launch error:', err)
+    res.status(500).json({ error: err.message })
   }
 })
 
