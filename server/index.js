@@ -1,10 +1,21 @@
 import express from 'express'
 import cors from 'cors'
 import { randomUUID } from 'crypto'
+import { readFileSync } from 'fs'
 import { readConfig, writeConfig } from './configManager.js'
 import { scanAllSessions } from './sessionScanner.js'
 import { scanBeads } from './beadsScanner.js'
 import { launchTerminal } from './terminalLauncher.js'
+
+function readEnvKey(keyName) {
+  if (process.env[keyName]) return process.env[keyName]
+  try {
+    const content = readFileSync('/Users/Shared/arc-secrets.env', 'utf8')
+    const match = content.match(new RegExp(`^export\\s+${keyName}=["']?([^"'\\n]+)["']?`, 'm'))
+    if (match) return match[1].trim()
+  } catch {}
+  return null
+}
 
 const app = express()
 const PORT = 3001
@@ -95,6 +106,35 @@ app.post('/api/launch', async (req, res) => {
     res.json({ ok: true })
   } catch (err) {
     console.error('launch error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── Brain Capture ─────────────────────────────────────────
+
+app.post('/api/brain-capture', async (req, res) => {
+  const { text } = req.body
+  if (!text) return res.status(400).json({ error: 'text required' })
+
+  const settings = readConfig('settings.json')
+  const endpointUrl = settings.customAction?.endpoint_url
+  const keyVar      = settings.customAction?.api_key_env_var || 'CAPTURE_API_KEY'
+
+  if (!endpointUrl) return res.status(400).json({ error: 'Brain endpoint URL not configured in Settings' })
+
+  const apiKey = readEnvKey(keyVar)
+  if (!apiKey) return res.status(400).json({ error: `${keyVar} not found in env or arc-secrets.env` })
+
+  try {
+    const response = await fetch(endpointUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ thought: text }),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) return res.status(502).json({ error: 'Brain API error', status: response.status, data })
+    res.json({ ok: true, data })
+  } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
