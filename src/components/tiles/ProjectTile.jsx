@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import McpBadge from './McpBadge.jsx'
+import ChangelogPanel from '../changelog/ChangelogPanel.jsx'
 import { useAudio, SOUNDS } from '../../hooks/useAudio.js'
 import { useSession } from '../../context/SessionContext.jsx'
 
@@ -22,6 +23,7 @@ function gaugeColor(pct) {
 }
 
 export default function ProjectTile({ project }) {
+  const [showChangelog, setShowChangelog] = useState(false)
   const tokens = project.token_count ?? 0
   const pct = Math.min(tokens / THRESHOLD_150K, 1)
   const status = project.status ?? 'no session'
@@ -127,6 +129,17 @@ export default function ProjectTile({ project }) {
               ))}
             </select>
           )}
+        </div>
+
+        <div className="tile-changelog-section">
+          <button
+            className="changelog-toggle"
+            onClick={() => setShowChangelog(v => !v)}
+            aria-expanded={showChangelog}
+          >
+            Changelog {showChangelog ? '▴' : '▾'}
+          </button>
+          {showChangelog && <ChangelogPanel projectId={project.id} />}
         </div>
       </div>
     </article>

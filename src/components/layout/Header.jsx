@@ -1,20 +1,40 @@
 import { NavLink } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext.jsx'
 import { useSession } from '../../context/SessionContext.jsx'
+import { useBrand } from '../../context/BrandContext.jsx'
+
+function Logo({ theme, brandMode, brandConfig }) {
+  if (brandMode === 'ADS') {
+    return (
+      <img
+        id="siteLogo"
+        src={theme === 'dark' ? '/ADS-logo-primary-orange-white-text.svg' : '/ADS-logo-primary.svg'}
+        alt="Arc Design Studio"
+      />
+    )
+  }
+  if (brandMode === 'Custom' && brandConfig.logo_path) {
+    return (
+      <img
+        id="siteLogo"
+        src={`/api/brand-asset?path=${encodeURIComponent(brandConfig.logo_path)}`}
+        alt="Command Center"
+      />
+    )
+  }
+  return <span className="site-logo-wordmark">Command Center</span>
+}
 
 export default function Header({ onBrainCapture }) {
   const { theme, toggleTheme } = useTheme()
   const { stats } = useSession()
+  const { brandMode, brandConfig } = useBrand()
 
   return (
     <header className="site-header">
       <div className="header-inner">
         <span className="site-logo">
-          <img
-            id="siteLogo"
-            src={theme === 'dark' ? '/ADS-logo-primary-orange-white-text.svg' : '/ADS-logo-primary.svg'}
-            alt="Arc Design Studio"
-          />
+          <Logo theme={theme} brandMode={brandMode} brandConfig={brandConfig} />
         </span>
 
         <div className="header-right">

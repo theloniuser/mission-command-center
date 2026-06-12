@@ -1,11 +1,13 @@
 import express from 'express'
 import cors from 'cors'
 import { randomUUID } from 'crypto'
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync, createReadStream } from 'fs'
+import { extname } from 'path'
 import { readConfig, writeConfig } from './configManager.js'
 import { scanAllSessions } from './sessionScanner.js'
 import { scanBeads } from './beadsScanner.js'
 import { launchTerminal } from './terminalLauncher.js'
+import { scanChangelogs } from './changelogScanner.js'
 
 function readEnvKey(keyName) {
   if (process.env[keyName]) return process.env[keyName]
@@ -137,6 +139,50 @@ app.post('/api/brain-capture', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
+})
+
+// ── Changelogs ────────────────────────────────────────────
+
+app.get('/api/changelogs/:projectId', (req, res) => {
+  const projects = readConfig('projects.json')
+  const project = projects.find(p => p.id === req.params.projectId)
+  if (!project) return res.json([])
+  try {
+    res.json(scanChangelogs(project.path))
+  } catch {
+    res.json([])
+  }
+})
+
+// ── Brand assets ──────────────────────────────────────────
+
+app.get('/api/brand-css', (req, res) => {
+  const { path: cssPath } = req.query
+  if (!cssPath || !cssPath.endsWith('.css')) {
+    return res.status(400).send('/* invalid path */')
+  }
+  if (!existsSync(cssPath)) {
+    return res.status(404).send('/* file not found */')
+  }
+  try {
+    const css = readFileSync(cssPath, 'utf8')
+    res.setHeader('Content-Type', 'text/css')
+    res.send(css)
+  } catch {
+    res.status(500).send('/* read error */')
+  }
+})
+
+app.get('/api/brand-asset', (req, res) => {
+  const { path: assetPath } = req.query
+  const allowed = ['.svg', '.png', '.jpg', '.jpeg']
+  if (!assetPath || !allowed.includes(extname(assetPath).toLowerCase())) {
+    return res.status(400).end()
+  }
+  if (!existsSync(assetPath)) return res.status(404).end()
+  const mimeMap = { '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' }
+  res.setHeader('Content-Type', mimeMap[extname(assetPath).toLowerCase()])
+  createReadStream(assetPath).pipe(res)
 })
 
 // ── Settings ──────────────────────────────────────────────

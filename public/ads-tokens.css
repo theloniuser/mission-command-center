@@ -1,0 +1,189 @@
+/* ============================================================
+   ADS Brand Tokens — Arc Design Studio
+   Single source of truth for all ADS web properties.
+   Link this file before any project CSS.
+   Hosted at: http://garden-spot.local/ads-brand/ads-tokens.css
+   Source:    arc-design-studio-brand/ads-tokens.css
+   ============================================================ */
+
+:root {
+
+  /* === Colors === */
+  --color-orange:        oklch(73.0% 0.186 52.6);   /* #ff7f00 — Arc Orange */
+  --color-charcoal:      oklch(34.1% 0.000 0);       /* #383838 — Studio Charcoal (4.63:1 on Arc Orange, WCAG AA) */
+  --color-blue:          oklch(66.8% 0.128 237.2);  /* #339fd9 — Lens Blue */
+  --color-white:         oklch(100% 0 0);            /* #ffffff */
+  --color-black:         oklch(0% 0 0);              /* #000000 */
+  --color-gray-light:    oklch(96.7% 0.003 106.4);  /* #f7f7f7 — UI surface */
+  --color-neutral:       oklch(96.7% 0.003 106.4);  /* #f4f4f2 — ghost hover */
+  --color-charcoal-deep: oklch(25.6% 0.000 0);       /* #232323 — dark mode page bg */
+  --color-near-black:    oklch(21.8% 0.000 0);       /* #1a1a1a — dark mode header bar */
+  --color-gray-warm:     oklch(30% 0.004 55);        /* warm dark gray — dark mode card surface */
+
+  /* Accessible UI variants (4.5:1 min on white) */
+  --color-orange-ui:    #b75b00;   /* 4.5:1 on white */
+  --color-blue-ui:      #267bb4;   /* 4.5:1 on white */
+
+  /* Alpha variants */
+  --color-charcoal-10:  rgba(60, 60, 60, 0.10);
+  --color-charcoal-08:  rgba(60, 60, 60, 0.08);
+  --color-charcoal-05:  rgba(60, 60, 60, 0.05);
+
+  /* === Typography === */
+  --font-heading: 'New Century Schoolbook LT Std', 'NCS', Georgia, serif;
+  --font-body:    'Univers Next Pro', 'univers-next', 'Helvetica Neue', Arial, sans-serif;
+
+  --font-size-h1:          48px;
+  --font-size-h2:          36px;
+  --font-size-h3:          24px;
+  --font-size-subheading:  18px;
+  --font-size-body:        16px;
+  --font-size-small:       14px;
+  --font-size-label:       12px;
+  --font-size-button:      15px;
+  --font-size-card-heading:22px;
+  --font-size-nav:         15px;
+
+  --font-weight-heading: 700;
+  --font-weight-body:    400;
+  --font-weight-medium:  500;
+
+  --line-height-heading: 1.2;
+  --line-height-body:    1.6;
+  --line-height-label:   1.4;
+
+  --letter-spacing-label: 0.04em;
+
+  /* === Spacing — 4px base unit === */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  16px;
+  --space-4:  24px;
+  --space-5:  32px;
+  --space-6:  48px;
+  --space-7:  64px;
+  --space-8:  96px;
+  --space-12: 48px;   /* brand site alias used in nav padding */
+
+  /* === Border Radius === */
+  --radius-sm: 2px;   /* chips, tags, badges */
+  --radius-md: 4px;   /* buttons, inputs */
+  --radius-lg: 9px;   /* cards, panels */
+  --radius-xl: 20px;  /* reserved — use sparingly */
+
+  /* === Shadows / Elevation === */
+  --shadow-card:       0 1px 3px rgba(60,60,60,0.08),  0 4px 16px rgba(60,60,60,0.06);
+  --shadow-card-hover: 0 4px 12px rgba(60,60,60,0.12), 0 8px 32px rgba(60,60,60,0.10);
+  --elevation-1: 0 1px 3px rgba(0,0,0,0.10);
+  --elevation-2: 0 4px 12px rgba(0,0,0,0.12);
+
+  /* === Transitions === */
+  --transition-base: 0.2s ease;
+
+  /* ============================================================
+     Dark Mode — warm near-black palette
+     Use [data-theme="dark"] on <html> to activate.
+     Independent warm oklch values; not derived from light-mode tokens.
+     ============================================================ */
+  --dark-surface-base:  var(--color-gray-warm);        /* card/panel surface */
+  --dark-surface-hover: oklch(33% 0.004 55);          /* card hover — subtle lift above surface */
+
+  --dark-bg:           var(--color-charcoal-deep);     /* #232323 — page background */
+  --dark-header:       var(--color-near-black);        /* #1a1a1a — nav/header bar */
+  --dark-surface:      var(--dark-surface-base);
+  --dark-surface-h:    var(--dark-surface-hover);
+  --dark-text:         var(--color-white);
+  --dark-text-fade:    rgba(255, 255, 255, 0.60);
+  --dark-border:       rgba(255, 255, 255, 0.10);
+  --dark-border-h:     rgba(255, 255, 255, 0.20);
+  --dark-divider:      rgba(255, 255, 255, 0.10);
+
+  /* ============================================================
+     Hub/portal theme tokens — semantic layer for hub-family pages
+     Use --hub-* throughout; override with [data-theme="dark"] block below.
+     Source of truth: ADS-skills/decisions/ads-dark-light-toggle-spec.md
+     ============================================================ */
+  --hub-max-width:         1020px;   /* hub page content width */
+  --hub-bg:                var(--color-gray-light);
+  --hub-header:            var(--color-white);
+  --hub-surface:           var(--color-white);
+  --hub-surface-h:         #f5f5f5;
+  --hub-border:            rgba(60, 61, 60, 0.10);
+  --hub-border-h:          rgba(60, 61, 60, 0.18);
+  --hub-text:              var(--color-charcoal);
+  --hub-text-fade:         rgba(60, 61, 60, 0.62);
+  --hub-divider:           rgba(60, 61, 60, 0.12);
+  --hub-code-bg:           rgba(60, 61, 60, 0.07);
+  --hub-badge-local:       var(--color-neutral);
+  --hub-badge-local-text:  var(--color-charcoal);
+  --hub-btn-border:        rgba(60, 61, 60, 0.22);
+  --hub-btn-text:          var(--color-charcoal);
+  --hub-btn-text-fade:     rgba(60, 61, 60, 0.62);
+  --hub-btn-hover:         rgba(60, 61, 60, 0.04);
+  --hub-toast-bg:          var(--color-charcoal);
+  --hub-toast-text:        var(--color-white);
+  --hub-badge-live-bg:     rgba(51, 159, 217, 0.10);
+  --hub-accent-muted:      rgba(60, 61, 60, 0.30);
+
+  /* ============================================================
+     Web Nav Bar — proven values from hub.html + ai-studio pages
+     Change here → ripples to every linked ADS property.
+     ============================================================ */
+
+  /* Logo */
+  --nav-logo-height:       96px;   /* standard nav */
+  --hub-logo-height:      125px;   /* hub/portal variant — larger identity zone */
+  --logo-min-width:       120px;
+
+  /* Header rule */
+  --nav-border-bottom:    3px solid var(--color-orange);
+
+  /* Arc texture — nav bar positioning */
+  --nav-texture-right:    80px;
+  --nav-texture-top:     -480px;
+  --nav-texture-width:   1210px;
+  --nav-texture-opacity:  0.13;
+  --nav-texture-opacity-light: 0.20;   /* light theme override */
+
+  /* Arc texture — stroke weights (applied via CSS, not SVG attrs) */
+  --nav-texture-stroke:       1;        /* primary paths */
+  --nav-texture-stroke-thin:  0.5;      /* connector path */
+
+  /* ============================================================
+     Buttons — size variants
+     ============================================================ */
+  --btn-padding-sm:   6px 14px;
+  --btn-padding-md:  10px 20px;    /* default */
+  --btn-padding-lg:  14px 28px;
+  --btn-font-size-sm: 13px;
+  --btn-font-size-md: var(--font-size-button);
+  --btn-font-size-lg: 17px;
+  --btn-line-height:  1;           /* prevents UNP ascender metrics from top-hugging text in small buttons */
+}
+
+/* ── Hub/portal dark overrides ───────────────────────────────── */
+html[data-theme="dark"] {
+  --hub-bg:            var(--dark-bg,        oklch(25.6% 0.000 0));
+  --hub-header:        var(--dark-header,    var(--color-near-black));
+  --hub-surface:       var(--dark-surface,   oklch(30% 0.004 55));
+  --hub-surface-h:     var(--dark-surface-h, oklch(33% 0.004 55));
+  --hub-border:        rgba(255, 255, 255, 0.10);
+  --hub-border-h:      rgba(255, 255, 255, 0.20);
+  --hub-text:          var(--color-white);
+  --hub-text-fade:     rgba(255, 255, 255, 0.60);
+  --hub-divider:       rgba(255, 255, 255, 0.10);
+  --hub-btn-border:    rgba(255, 255, 255, 0.18);
+  --hub-btn-text:      rgba(255, 255, 255, 0.85);
+  --hub-btn-text-fade: rgba(255, 255, 255, 0.55);
+  --hub-btn-hover:     rgba(255, 255, 255, 0.06);
+  --hub-toast-bg:      var(--color-white);
+  --hub-toast-text:    var(--color-charcoal);
+  --hub-code-bg:       rgba(255, 255, 255, 0.08);
+  --hub-badge-local:   rgba(255, 255, 255, 0.08);
+  --hub-badge-local-text: rgba(255, 255, 255, 0.85);
+  --hub-badge-live-bg: rgba(51, 159, 217, 0.15);
+  --hub-accent-muted:  rgba(255, 255, 255, 0.25);
+}
+
+/* Arc texture fades in dark mode (designed for light bg) */
+html[data-theme="dark"] .site-texture { opacity: 0.12; }

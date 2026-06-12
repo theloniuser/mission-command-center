@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useBrand } from '../../context/BrandContext.jsx'
 
 export default function SettingsForm({ settings, onSaved }) {
   const [form, setForm] = useState(settings)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const { applyBrand } = useBrand()
 
   function handleAlerts(e) {
     const val = e.target.type === 'number' ? Number(e.target.value) : e.target.value
@@ -30,6 +32,7 @@ export default function SettingsForm({ settings, onSaved }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
+      applyBrand(form.brand)
       setSaved(true)
       onSaved(form)
     } finally {
@@ -117,7 +120,7 @@ export default function SettingsForm({ settings, onSaved }) {
           />
         </div>
         <div className="form-group">
-          <label>API key env var <span>(name only — never the value)</span></label>
+          <label>API key env var <span>(name only -- never the value)</span></label>
           <input
             className="form-input"
             name="api_key_env_var"
@@ -144,10 +147,40 @@ export default function SettingsForm({ settings, onSaved }) {
             <option value="Custom">Custom</option>
           </select>
         </div>
+
         {form.brand.theme_mode === 'Custom' && (
-          <p style={{ fontSize: 'var(--font-size-small)', color: 'var(--hub-text-fade)' }}>
-            Custom theme configuration is available in Milestone 4.
-          </p>
+          <>
+            <div className="form-group">
+              <label>Token CSS path <span>(absolute path to .css file)</span></label>
+              <input
+                className="form-input"
+                name="token_css_path"
+                value={form.brand.token_css_path}
+                onChange={handleBrand}
+                placeholder="/path/to/your-tokens.css"
+              />
+            </div>
+            <div className="form-group">
+              <label>Logo path <span>(absolute path to .svg, .png, or .jpg)</span></label>
+              <input
+                className="form-input"
+                name="logo_path"
+                value={form.brand.logo_path}
+                onChange={handleBrand}
+                placeholder="/path/to/logo.svg"
+              />
+            </div>
+            <div className="form-group">
+              <label>Primary color <span>(optional hex override)</span></label>
+              <input
+                className="form-input"
+                name="primary_color"
+                value={form.brand.primary_color}
+                onChange={handleBrand}
+                placeholder="#6366f1"
+              />
+            </div>
+          </>
         )}
       </section>
 

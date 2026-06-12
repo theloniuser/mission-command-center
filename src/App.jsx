@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext.jsx'
+import { BrandProvider } from './context/BrandContext.jsx'
 import { SessionProvider, useSession } from './context/SessionContext.jsx'
 import Header from './components/layout/Header.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -32,11 +33,13 @@ function AppLayout() {
 export default function App() {
   return (
     <ThemeProvider>
-      <SessionProvider>
-        <BrowserRouter>
-          <AppLayout />
-        </BrowserRouter>
-      </SessionProvider>
+      <BrandProvider>
+        <SessionProvider>
+          <BrowserRouter>
+            <AppLayout />
+          </BrowserRouter>
+        </SessionProvider>
+      </BrandProvider>
     </ThemeProvider>
   )
 }
