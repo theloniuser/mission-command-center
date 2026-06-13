@@ -14,5 +14,13 @@
     "launch_command": "npm run dev",
     "beads_ids": [],
     "color": "#339fd9"
+  },
+  {
+    "id": "763caa04-c933-43b7-89e7-eeeafc3aacb7",
+    "name": "br-sushi-steak-brand",
+    "path": "/Users/jamescantwell/ai-cli-projects/01-ACTIVE-CLIENTS/blue-ribbon-restaurants/projects/br-sushi-steak-brand",
+    "launch_command": "",
+    "beads_ids": [],
+    "color": "#2a9d8f"
   }
 ]
