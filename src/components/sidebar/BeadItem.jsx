@@ -6,7 +6,9 @@ export default function BeadItem({ bead, onNewSession }) {
   return (
     <div className="bead-item">
       <div className="bead-main">
-        <span className={`bead-priority p${bead.priority}`}>P{bead.priority}</span>
+        <span className={`bead-priority bead-priority-${bead.priority}`}>
+          {bead.priority === 'today' ? '🔴' : '🟡'}
+        </span>
         <span className="bead-title">{bead.title}</span>
       </div>
       <div className="bead-actions">

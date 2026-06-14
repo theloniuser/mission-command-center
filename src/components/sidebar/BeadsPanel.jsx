@@ -1,21 +1,32 @@
 import { useEffect, useState } from 'react'
 import BeadItem from './BeadItem.jsx'
 
+function parseBacklogJson(data) {
+  const flat = data.backlog || []
+  const map = {}
+  for (const b of flat) {
+    const cat = b.category || 'Other'
+    if (!map[cat]) map[cat] = []
+    map[cat].push(b)
+  }
+  return Object.entries(map).map(([project, beads]) => ({ project, beads }))
+}
+
 export default function BeadsPanel({ onNewSession }) {
   const [groups, setGroups]   = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
   function fetchBeads() {
-    fetch('/api/beads')
+    fetch(`/backlog.json?t=${Date.now()}`)
       .then(r => r.json())
-      .then(data => { setGroups(data.groups || []); setLoading(false); setError(null) })
+      .then(data => { setGroups(parseBacklogJson(data)); setLoading(false); setError(null) })
       .catch(() => { setError('Failed to load beads'); setLoading(false) })
   }
 
   useEffect(() => {
     fetchBeads()
-    const id = setInterval(fetchBeads, 30_000)
+    const id = setInterval(fetchBeads, 60_000)
     return () => clearInterval(id)
   }, [])
 
@@ -32,6 +43,9 @@ export default function BeadsPanel({ onNewSession }) {
 
   return (
     <div className="beads-panel">
+      <div className="beads-toolbar">
+        <button className="bead-btn beads-refresh" onClick={fetchBeads}>↻ Refresh</button>
+      </div>
       {rituals.length > 0 && (
         <div className="bead-group bead-group-rituals">
           <div className="bead-group-header">Rituals</div>

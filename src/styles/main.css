@@ -780,9 +780,9 @@ html[data-theme="dark"] .eyebrow {
   flex-shrink: 0;
   margin-top: 1px;
 }
-.bead-priority.p1 { background: var(--color-orange); color: var(--color-charcoal); }
-.bead-priority.p2 { background: var(--color-blue); color: var(--color-charcoal); }
-.bead-priority.p3 { background: var(--hub-btn-bg); color: var(--hub-text-fade); }
+.beads-toolbar { display: flex; justify-content: flex-end; padding: 0 0 6px; }
+.beads-refresh { font-size: 11px; }
+.bead-group-rituals .bead-group-header { color: var(--color-blue); }
 .bead-title {
   font-size: 12px;
   color: var(--hub-text);
@@ -801,7 +801,6 @@ html[data-theme="dark"] .eyebrow {
 .bead-btn:hover { background: var(--hub-btn-hover); }
 .bead-launch { border-color: var(--color-orange-ui); color: var(--color-orange-ui); }
 .bead-launch:hover { background: var(--color-orange-ui); color: var(--color-white); }
-.bead-group-rituals .bead-group-header { color: var(--color-blue); }
 .sidebar-error { color: var(--color-orange-ui); }
 
 /* ── Modals ──────────────────────────────────────────────── */
