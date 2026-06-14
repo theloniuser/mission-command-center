@@ -1,3 +1,7 @@
+import { useState } from 'react'
+
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 function formatRelative(isoStr) {
   const diff = Date.now() - new Date(isoStr).getTime()
   const h = Math.floor(diff / 3_600_000)
@@ -18,17 +22,38 @@ function formatNextRun(nextRunMs) {
   return `${d}d`
 }
 
-export default function BeadItem({ bead, onNewSession }) {
+export default function BeadItem({ bead, onNewSession, onClosed }) {
+  const [closing, setClosing] = useState(false)
+
   function handleCopy() {
     navigator.clipboard.writeText(bead.title)
   }
 
+  async function handleClose() {
+    if (closing) return
+    setClosing(true)
+    try {
+      await fetch(`${API_BASE}/api/beads/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: `${bead.project}-${bead.id}` }),
+      })
+      window.dispatchEvent(new CustomEvent('backlog-updated'))
+      onClosed && onClosed()
+    } catch {
+      setClosing(false)
+    }
+  }
+
   return (
-    <div className="bead-item">
+    <div className={`bead-item${closing ? ' bead-item-closing' : ''}`}>
       <div className="bead-main">
-        <span className={`bead-priority bead-priority-${bead.priority}`}>
-          {(bead.priority === 'today' || bead.priority === 1) ? '🔴' : '🟡'}
-        </span>
+        <button
+          className="bead-close-check"
+          onClick={handleClose}
+          disabled={closing}
+          title="Close bead"
+        >{closing ? '✓' : '○'}</button>
         <span className="bead-id">{bead.id}</span>
         <span className="bead-title">{bead.title}</span>
       </div>

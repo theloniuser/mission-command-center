@@ -117,6 +117,19 @@ app.get('/api/beads', async (req, res) => {
   }
 })
 
+app.post('/api/beads/close', async (req, res) => {
+  const { id } = req.body
+  if (!id?.trim()) return res.status(400).json({ error: 'id required' })
+  try {
+    await execAsync(`bd close "${id.trim()}"`, {
+      env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
+    })
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.post('/api/beads/new', async (req, res) => {
   const { title } = req.body
   if (!title?.trim()) return res.status(400).json({ error: 'title required' })

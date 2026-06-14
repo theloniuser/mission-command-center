@@ -59,7 +59,7 @@ export default function BeadsPanel({ onNewSession, refreshTick, onRefreshDone })
         <div key={cat} className={`bead-group${cat === 'Rituals' ? ' bead-group-rituals' : ''}`}>
           <div className="bead-group-header">{cat}</div>
           {grouped[cat].map(bead => (
-            <BeadItem key={bead.id} bead={bead} onNewSession={onNewSession} />
+            <BeadItem key={bead.id} bead={bead} onNewSession={onNewSession} onClosed={fetchBeads} />
           ))}
         </div>
       ))}
