@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import { readFileSync, existsSync, createReadStream } from 'fs'
+import { readdir, mkdir } from 'fs/promises'
 import { extname, resolve, dirname as _dirOf } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -332,17 +333,30 @@ app.get('/api/brand-asset', (req, res) => {
   createReadStream(assetPath).pipe(res)
 })
 
-// ── Folder picker (macOS) ─────────────────────────────────
+// ── Folder browser ────────────────────────────────────────
 
-app.post('/api/browse-folder', async (req, res) => {
+app.get('/api/ls', async (req, res) => {
+  const dir = req.query.path || process.env.HOME || '/Users'
   try {
-    const { execSync } = await import('child_process')
-    const path = execSync("osascript -e 'POSIX path of (choose folder)'", { timeout: 30000 })
-      .toString().trim()
-    res.json({ path })
+    const entries = await readdir(dir, { withFileTypes: true })
+    const dirs = entries
+      .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+      .map(e => e.name)
+      .sort((a, b) => a.localeCompare(b))
+    res.json({ path: dir, dirs })
   } catch (err) {
-    if (err.status === 1) return res.json({ path: null }) // user cancelled
-    res.status(500).json({ error: err.message })
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.post('/api/mkdir', async (req, res) => {
+  const { path: dir } = req.body
+  if (!dir) return res.status(400).json({ error: 'path required' })
+  try {
+    await mkdir(dir, { recursive: true })
+    res.json({ path: dir })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
   }
 })
 

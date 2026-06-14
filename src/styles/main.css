@@ -960,6 +960,25 @@ html[data-theme="dark"] .eyebrow {
 }
 .modal-error { color: var(--color-orange-ui); font-size: 12px; margin: 0; }
 .modal-browse-path { font-size: 11px; color: var(--hub-text-fade); font-family: monospace; padding: 4px 8px; background: var(--hub-surface-h); border-radius: var(--radius-sm); word-break: break-all; }
+.modal-browse-selected { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.modal-btn-pick { padding: 4px 10px; font-size: 11px; background: var(--hub-surface-h); color: var(--hub-text); border: 1px solid var(--hub-border); border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; }
+.modal-btn-pick:hover { background: var(--hub-border); }
+
+.folder-browser { border: 1px solid var(--hub-border); border-radius: var(--radius-md); overflow: hidden; margin-top: 4px; }
+.folder-browser-path { font-size: 10px; font-family: monospace; color: var(--hub-text-fade); padding: 5px 10px; background: var(--hub-surface-h); border-bottom: 1px solid var(--hub-border); word-break: break-all; }
+.folder-browser-list { max-height: 160px; overflow-y: auto; }
+.folder-browser-item { padding: 5px 10px; font-size: 12px; cursor: pointer; color: var(--hub-text); display: flex; align-items: center; gap: 6px; }
+.folder-browser-item::before { content: '📁'; font-size: 11px; }
+.folder-browser-up::before { content: ''; }
+.folder-browser-item:hover { background: var(--hub-surface-h); }
+.folder-browser-empty { padding: 8px 10px; font-size: 11px; color: var(--hub-text-fade); }
+.folder-browser-error { padding: 5px 10px; font-size: 11px; color: var(--color-orange-ui); }
+.folder-browser-actions { display: flex; border-top: 1px solid var(--hub-border); }
+.folder-browser-actions .modal-btn-pick { border-radius: 0; border: none; border-right: 1px solid var(--hub-border); }
+.folder-browser-select { flex: 1; border-radius: 0; border: none; }
+.folder-browser-new-row { display: flex; gap: 4px; padding: 6px; border-top: 1px solid var(--hub-border); background: var(--hub-surface-h); }
+.folder-browser-new-input { flex: 1; font-family: monospace; font-size: 11px; padding: 3px 7px; background: var(--hub-bg); color: var(--hub-text); border: 1px solid var(--hub-border); border-radius: var(--radius-sm); }
+.folder-browser-new-input::placeholder { color: var(--hub-text-fade); }
 .modal-footer {
   display: flex; gap: 8px; justify-content: flex-end;
   padding: 12px 20px 16px;
