@@ -801,6 +801,7 @@ html[data-theme="dark"] .eyebrow {
 .bead-btn:hover { background: var(--hub-btn-hover); }
 .bead-launch { border-color: var(--color-orange-ui); color: var(--color-orange-ui); }
 .bead-launch:hover { background: var(--color-orange-ui); color: var(--color-white); }
+.bead-group-rituals .bead-group-header { color: var(--color-blue); }
 .sidebar-error { color: var(--color-orange-ui); }
 
 /* ── Modals ──────────────────────────────────────────────── */

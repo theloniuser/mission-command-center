@@ -23,9 +23,24 @@ export default function BeadsPanel({ onNewSession }) {
   if (error)   return <p className="sidebar-empty sidebar-error">{error}</p>
   if (!groups.length) return <p className="sidebar-empty">No open beads.</p>
 
+  const allBeads = groups.flatMap(g => g.beads)
+  const rituals = allBeads.filter(b => b.title.toLowerCase().includes('ritual'))
+  const nonRitualGroups = groups.map(g => ({
+    ...g,
+    beads: g.beads.filter(b => !b.title.toLowerCase().includes('ritual'))
+  })).filter(g => g.beads.length > 0)
+
   return (
     <div className="beads-panel">
-      {groups.map(group => (
+      {rituals.length > 0 && (
+        <div className="bead-group bead-group-rituals">
+          <div className="bead-group-header">Rituals</div>
+          {rituals.map(bead => (
+            <BeadItem key={bead.id} bead={bead} onNewSession={onNewSession} />
+          ))}
+        </div>
+      )}
+      {nonRitualGroups.map(group => (
         <div key={group.project} className="bead-group">
           <div className="bead-group-header">{group.project}</div>
           {group.beads.map(bead => (
