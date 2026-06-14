@@ -310,6 +310,19 @@ body {
   flex-direction: column;
 }
 
+.project-tile--temp { border: 2px dashed var(--hub-border-h); box-shadow: none; }
+.project-tile--temp:hover { box-shadow: none; border-color: var(--color-orange-ui); }
+.tile-temp-badge { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hub-text-fade); padding: 6px 14px 0; }
+.tile-temp-path { font-size: 11px; color: var(--hub-text-fade); font-family: monospace; word-break: break-all; margin-top: 4px; }
+.tile-temp-actions { display: flex; gap: 8px; margin-top: 12px; }
+.tile-temp-save-row { display: flex; gap: 6px; margin-top: 12px; align-items: center; }
+.tile-temp-name-input { flex: 1; font-size: 13px; padding: 4px 8px; border: 1px solid var(--hub-btn-border); border-radius: var(--radius-sm); background: var(--hub-surface); color: var(--hub-text); }
+.tile-temp-btn { font-size: 12px; padding: 4px 10px; border: 1px solid var(--hub-btn-border); border-radius: var(--radius-sm); background: none; color: var(--hub-btn-text); cursor: pointer; }
+.tile-temp-promote { border-color: var(--color-orange-ui); color: var(--color-orange-ui); }
+.tile-temp-promote:hover { background: var(--color-orange-ui); color: var(--color-white); }
+.tile-temp-dismiss:hover { border-color: var(--hub-text-fade); background: var(--hub-surface-h); }
+.tile-temp-save { background: var(--color-orange-ui); border-color: var(--color-orange-ui); color: var(--color-white); }
+
 .project-tile:hover {
   box-shadow: var(--shadow-card-hover);
 }

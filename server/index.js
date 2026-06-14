@@ -105,6 +105,48 @@ app.get('/api/brain-items', (req, res) => {
   }
 })
 
+// ── Temp projects ─────────────────────────────────────────
+
+app.get('/api/temp-projects', (req, res) => {
+  res.json(readConfig('temp-projects.json') || [])
+})
+
+app.post('/api/temp-projects', (req, res) => {
+  const { path: projPath, name } = req.body
+  if (!projPath) return res.status(400).json({ error: 'path required' })
+  const temps = readConfig('temp-projects.json') || []
+  const item = { id: randomUUID(), path: projPath, name: name || projPath.split('/').filter(Boolean).pop() }
+  temps.unshift(item)
+  writeConfig('temp-projects.json', temps)
+  res.status(201).json(item)
+})
+
+app.delete('/api/temp-projects/:id', (req, res) => {
+  const temps = (readConfig('temp-projects.json') || []).filter(t => t.id !== req.params.id)
+  writeConfig('temp-projects.json', temps)
+  res.status(204).end()
+})
+
+app.post('/api/temp-projects/:id/promote', (req, res) => {
+  const temps = readConfig('temp-projects.json') || []
+  const item  = temps.find(t => t.id === req.params.id)
+  if (!item) return res.status(404).json({ error: 'not found' })
+  const name  = req.body.name?.trim() || item.name
+  const projects = readConfig('projects.json')
+  const promoted = {
+    id: randomUUID(),
+    name,
+    path: item.path,
+    launch_command: '',
+    beads_ids: [],
+    color: TILE_COLORS[projects.length % TILE_COLORS.length],
+  }
+  projects.push(promoted)
+  writeConfig('projects.json', projects)
+  writeConfig('temp-projects.json', temps.filter(t => t.id !== req.params.id))
+  res.status(201).json(promoted)
+})
+
 // ── Beads ─────────────────────────────────────────────────
 
 app.get('/api/beads', async (req, res) => {

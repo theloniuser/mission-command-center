@@ -1,22 +1,38 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import ProjectTile from '../components/tiles/ProjectTile.jsx'
+import TempProjectTile from '../components/tiles/TempProjectTile.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
 const STATUS_ORDER = { active: 0, idle: 1, closed: 2 }
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 export default function Dashboard() {
-  const [projects, setProjects] = useState([])
+  const [projects,    setProjects]    = useState([])
+  const [tempProjects, setTempProjects] = useState([])
   const [projLoading, setProjLoading] = useState(true)
   const { sessions, loading: sessLoading, openLauncher } = useSession()
 
-  useEffect(() => {
+  const fetchProjects = useCallback(() => {
     fetch(`${API_BASE}/api/projects`)
       .then(r => r.json())
       .then(data => { setProjects(data); setProjLoading(false) })
       .catch(() => setProjLoading(false))
+  }, [])
+
+  const fetchTempProjects = useCallback(() => {
+    fetch(`${API_BASE}/api/temp-projects`)
+      .then(r => r.json())
+      .then(setTempProjects)
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetchProjects()
+    fetchTempProjects()
+    window.addEventListener('temp-project-created', fetchTempProjects)
+    return () => window.removeEventListener('temp-project-created', fetchTempProjects)
   }, [])
 
   const tiles = useMemo(() => {
@@ -45,7 +61,7 @@ export default function Dashboard() {
           <div className="tile-grid">
             <p style={{ color: 'var(--hub-text-fade)' }}>Loading...</p>
           </div>
-        ) : tiles.length === 0 ? (
+        ) : tiles.length === 0 && tempProjects.length === 0 ? (
           <div className="tile-grid">
             <div className="tile-empty-state">
               <p>No projects configured yet.</p>
@@ -56,6 +72,14 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="tile-grid">
+            {tempProjects.map(t => (
+              <TempProjectTile
+                key={t.id}
+                project={t}
+                onDismiss={fetchTempProjects}
+                onPromote={() => { fetchTempProjects(); fetchProjects() }}
+              />
+            ))}
             {tiles.map(p => (
               <ProjectTile key={p.id} project={p} />
             ))}

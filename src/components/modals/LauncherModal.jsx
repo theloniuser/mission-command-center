@@ -62,6 +62,15 @@ export default function LauncherModal({ isOpen, initialBead, onClose }) {
         const d = await res.json()
         setError(d.error || 'Launch failed')
       } else {
+        // Create a temp project card for browsed folders
+        if (projectId === BROWSE_ID && browsedPath) {
+          await fetch(`${API_BASE}/api/temp-projects`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: browsedPath }),
+          }).catch(() => {})
+          window.dispatchEvent(new CustomEvent('temp-project-created'))
+        }
         onClose()
       }
     } catch (err) {
