@@ -10,7 +10,7 @@ export function useAlerts(sessions, settings) {
   const [alerts, setAlerts] = useState([])
   const firedRef            = useRef(new Map())
   const isInitialRef        = useRef(true)
-  const inactivityMs        = (settings?.alerts?.inactivity_timeout ?? 30) * 60 * 1000
+  const inactivityMs        = (settings?.alerts?.inactivity_timeout ?? 2) * 60 * 1000
 
   useEffect(() => {
     const now = Date.now()

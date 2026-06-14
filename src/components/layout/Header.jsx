@@ -2,13 +2,14 @@ import { NavLink } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext.jsx'
 import { useSession } from '../../context/SessionContext.jsx'
 import { useBrand } from '../../context/BrandContext.jsx'
+import BrainCapture from '../sidebar/BrainCapture.jsx'
 
 function Logo({ theme, brandMode, brandConfig }) {
   if (brandMode === 'ADS') {
     return (
       <img
         id="siteLogo"
-        src={theme === 'dark' ? '/ADS-logo-primary-orange-white-text.svg' : '/ADS-logo-primary.svg'}
+        src={theme === 'dark' ? `${import.meta.env.BASE_URL}ADS-logo-primary-orange-white-text.svg` : `${import.meta.env.BASE_URL}ADS-logo-primary.svg`}
         alt="Arc Design Studio"
       />
     )
@@ -25,7 +26,7 @@ function Logo({ theme, brandMode, brandConfig }) {
   return <span className="site-logo-wordmark">Command Center</span>
 }
 
-export default function Header({ onBrainCapture }) {
+export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const { stats } = useSession()
   const { brandMode, brandConfig } = useBrand()
@@ -42,14 +43,7 @@ export default function Header({ onBrainCapture }) {
             <NavLink to="/" end>Dashboard</NavLink>
             <NavLink to="/settings">Settings</NavLink>
           </nav>
-          <button
-            className="header-brain-btn"
-            onClick={onBrainCapture}
-            title="Capture to Brain"
-            aria-label="Capture to Brain"
-          >
-            Brain
-          </button>
+
           <button
             className="theme-toggle"
             id="themeToggle"
@@ -75,6 +69,7 @@ export default function Header({ onBrainCapture }) {
             <strong>${stats?.spend_today ?? '—'}</strong> today
           </span>
         </div>
+        <BrainCapture inline />
       </div>
     </header>
   )

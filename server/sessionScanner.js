@@ -126,6 +126,15 @@ function scanSession(projectPath, projectId, projectName) {
     }
   }
 
+  // "Needs response" = last typed entry is from assistant (Claude finished, waiting for user)
+  let needsResponse = false
+  for (let i = lines.length - 1; i >= 0; i--) {
+    let entry
+    try { entry = JSON.parse(lines[i]) } catch { continue }
+    if (entry.type === 'assistant') { needsResponse = true; break }
+    if (entry.type === 'user') { needsResponse = false; break }
+  }
+
   // "Engaged" = appeared in last 50 lines
   const last50 = lines.slice(-50)
   const engagedServers = new Set()
@@ -163,6 +172,7 @@ function scanSession(projectPath, projectId, projectName) {
     started_at: startedAt,
     last_active_at: mtime.toISOString(),
     spend_usd: Math.round(spendUsd * 10000) / 10000,
+    needs_response: status !== 'closed' && needsResponse,
     mcps,
   }
 }

@@ -1,31 +1,27 @@
 import { useEffect, useState } from 'react'
 import BeadItem from './BeadItem.jsx'
 
-function parseBacklogJson(data) {
-  const flat = data.backlog || []
-  const map = {}
-  for (const b of flat) {
-    const cat = b.category || 'Other'
-    if (!map[cat]) map[cat] = []
-    map[cat].push(b)
-  }
-  return Object.entries(map).map(([project, beads]) => ({ project, beads }))
-}
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-export default function BeadsPanel({ onNewSession }) {
+
+export default function BeadsPanel({ onNewSession, refreshTick, onRefreshDone }) {
   const [groups, setGroups]   = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
-  function fetchBeads() {
-    fetch(`/backlog.json?t=${Date.now()}`)
+  function fetchBeads(isManual = false) {
+    if (isManual) setLoading(true)
+    fetch(`${API_BASE}/api/beads?t=${Date.now()}`)
       .then(r => r.json())
-      .then(data => { setGroups(parseBacklogJson(data)); setLoading(false); setError(null) })
-      .catch(() => { setError('Failed to load beads'); setLoading(false) })
+      .then(data => { setGroups(data.groups || []); setLoading(false); setError(null); onRefreshDone?.() })
+      .catch(() => { setError('Failed to load beads'); setLoading(false); onRefreshDone?.() })
   }
 
+  useEffect(() => { fetchBeads() }, [])
+
+  useEffect(() => { if (refreshTick > 0) fetchBeads(true) }, [refreshTick])
+
   useEffect(() => {
-    fetchBeads()
     const id = setInterval(fetchBeads, 60_000)
     return () => clearInterval(id)
   }, [])
@@ -43,9 +39,6 @@ export default function BeadsPanel({ onNewSession }) {
 
   return (
     <div className="beads-panel">
-      <div className="beads-toolbar">
-        <button className="bead-btn beads-refresh" onClick={fetchBeads}>↻ Refresh</button>
-      </div>
       {rituals.length > 0 && (
         <div className="bead-group bead-group-rituals">
           <div className="bead-group-header">Rituals</div>

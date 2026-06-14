@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { useAlerts } from '../hooks/useAlerts.js'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 const SessionContext = createContext({
   sessions: [], stats: null, loading: true, settings: null,
   alerts: [], dismiss: () => {},
@@ -35,7 +37,7 @@ export function SessionProvider({ children }) {
   function closeBrain() { setBrainOpen(false) }
 
   function fetchSessions() {
-    fetch('/api/sessions')
+    fetch(`${API_BASE}/api/sessions`)
       .then(r => r.json())
       .then(data => {
         setSessions(data.sessions || [])
@@ -52,7 +54,7 @@ export function SessionProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(setSettings).catch(() => {})
+    fetch(`${API_BASE}/api/settings`).then(r => r.json()).then(setSettings).catch(() => {})
   }, [])
 
   const { alerts, dismiss } = useAlerts(sessions, settings)

@@ -41,7 +41,8 @@ export default function ProjectTile({ project }) {
 
   const { alerts, dismiss } = useSession()
   const myAlerts = alerts.filter(a => a.projectId === project.id)
-  const prevAlertCountRef = useRef(0)
+  const prevAlertCountRef  = useRef(0)
+  const prevNeedsRespRef   = useRef(false)
 
   useEffect(() => {
     if (myAlerts.length > prevAlertCountRef.current) {
@@ -50,6 +51,15 @@ export default function ProjectTile({ project }) {
     }
     prevAlertCountRef.current = myAlerts.length
   }, [myAlerts.length, play, getPrefs])
+
+  useEffect(() => {
+    const nowNeeds = !!project.needs_response
+    if (nowNeeds && !prevNeedsRespRef.current) {
+      const prefs = getPrefs()
+      if (prefs.enabled !== false) play(prefs.sound || 'chime')
+    }
+    prevNeedsRespRef.current = nowNeeds
+  }, [project.needs_response, play, getPrefs])
 
   function handleAlertAct(alert) {
     if (alert.action) navigator.clipboard.writeText(alert.action)

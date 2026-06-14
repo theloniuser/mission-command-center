@@ -6,23 +6,17 @@ import Header from './components/layout/Header.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Settings from './pages/Settings.jsx'
 import LauncherModal from './components/modals/LauncherModal.jsx'
-import BrainCaptureModal from './components/modals/BrainCaptureModal.jsx'
-
 function AppLayout() {
-  const {
-    launcherOpen, launcherBead, closeLauncher,
-    brainOpen, openBrain, closeBrain,
-  } = useSession()
+  const { launcherOpen, launcherBead, closeLauncher } = useSession()
 
   return (
     <>
-      <Header onBrainCapture={openBrain} />
+      <Header />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
       <LauncherModal isOpen={launcherOpen} initialBead={launcherBead} onClose={closeLauncher} />
-      <BrainCaptureModal isOpen={brainOpen} onClose={closeBrain} />
     </>
   )
 }
@@ -32,7 +26,7 @@ export default function App() {
     <ThemeProvider>
       <BrandProvider>
         <SessionProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <AppLayout />
           </BrowserRouter>
         </SessionProvider>

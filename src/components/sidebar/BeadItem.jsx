@@ -1,3 +1,23 @@
+function formatRelative(isoStr) {
+  const diff = Date.now() - new Date(isoStr).getTime()
+  const h = Math.floor(diff / 3_600_000)
+  const d = Math.floor(diff / 86_400_000)
+  if (h < 1)  return 'just now'
+  if (h < 24) return `${h}h ago`
+  if (d < 7)  return `${d}d ago`
+  return new Date(isoStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function formatNextRun(nextRunMs) {
+  const diff = nextRunMs - Date.now()
+  if (diff <= 0) return 'overdue'
+  const h = Math.floor(diff / 3_600_000)
+  const d = Math.floor(diff / 86_400_000)
+  if (h < 1)  return 'less than 1h'
+  if (h < 24) return `${h}h`
+  return `${d}d`
+}
+
 export default function BeadItem({ bead, onNewSession }) {
   function handleCopy() {
     navigator.clipboard.writeText(bead.title)
@@ -7,10 +27,18 @@ export default function BeadItem({ bead, onNewSession }) {
     <div className="bead-item">
       <div className="bead-main">
         <span className={`bead-priority bead-priority-${bead.priority}`}>
-          {bead.priority === 'today' ? '🔴' : '🟡'}
+          {(bead.priority === 'today' || bead.priority === 1) ? '🔴' : '🟡'}
         </span>
+        <span className="bead-id">{bead.id}</span>
         <span className="bead-title">{bead.title}</span>
       </div>
+      {(bead.lastRun || bead.nextRunMs) && (
+        <div className="bead-last-run">
+          {bead.lastRun && <>last run {formatRelative(bead.lastRun)}</>}
+          {bead.lastRun && bead.nextRunMs && <span className="bead-next-run-sep"> · </span>}
+          {bead.nextRunMs && <span className={bead.nextRunMs < Date.now() ? 'bead-next-run overdue' : 'bead-next-run'}>re-run in {formatNextRun(bead.nextRunMs)}</span>}
+        </div>
+      )}
       <div className="bead-actions">
         <button className="bead-btn bead-launch" onClick={() => onNewSession(bead)} title="Launch new session">
           Launch
