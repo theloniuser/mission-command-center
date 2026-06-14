@@ -168,6 +168,15 @@ app.post('/api/brain-capture', async (req, res) => {
     })
     const data = await response.json().catch(() => ({}))
     if (!response.ok) return res.status(502).json({ error: 'Brain API error', status: response.status, data })
+
+    // Regenerate backlog.json in background so sidebar updates immediately
+    const scriptPath = resolve(_serverDir, '../../scripts/generate-backlog.sh')
+    if (existsSync(scriptPath)) {
+      execAsync(`bash "${scriptPath}"`, {
+        env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
+      }).catch(() => {})
+    }
+
     res.json({ ok: true, data })
   } catch (err) {
     res.status(500).json({ error: err.message })

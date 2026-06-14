@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-export default function BrainCapture({ inline = false }) {
+export default function BrainCapture({ inline = false, onCaptured }) {
   const [text, setText]     = useState('')
   const [status, setStatus] = useState(null) // null | 'sending' | 'ok' | 'error'
 
@@ -27,6 +27,8 @@ export default function BrainCapture({ inline = false }) {
       setText('')
       setStatus('ok')
       setTimeout(() => setStatus(null), 2000)
+      // Backlog regeneration takes ~5s — refresh brain panel after that
+      setTimeout(() => window.dispatchEvent(new CustomEvent('brain-captured')), 6000)
     } catch {
       setStatus('error')
       setTimeout(() => setStatus(null), 3000)

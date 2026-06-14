@@ -25,6 +25,10 @@ export default function BrainItemsPanel({ refreshTick }) {
 
   useEffect(() => { fetchItems() }, [])
   useEffect(() => { if (refreshTick > 0) fetchItems() }, [refreshTick])
+  useEffect(() => {
+    window.addEventListener('brain-captured', fetchItems)
+    return () => window.removeEventListener('brain-captured', fetchItems)
+  }, [])
 
   const forClaude = data.for_claude || []
   const toDo      = data.to_do || []
