@@ -788,7 +788,7 @@ html[data-theme="dark"] .eyebrow {
 .bead-item:last-child { border-bottom: none; }
 .bead-item-closing { opacity: 0.4; pointer-events: none; }
 .bead-main  { display: flex; align-items: flex-start; gap: 7px; }
-.bead-close-check { flex-shrink: 0; width: 14px; height: 14px; margin-top: 2px; cursor: pointer; appearance: none; -webkit-appearance: none; border: 1.5px solid var(--hub-btn-border); border-radius: 3px; background: var(--color-charcoal-05, #e8e8e7); transition: background 0.1s, border-color 0.1s; }
+.bead-close-check { flex-shrink: 0; width: 14px; height: 14px; margin-top: 2px; cursor: pointer; appearance: none; -webkit-appearance: none; border: 1.5px solid var(--hub-btn-border); border-radius: 3px; background: var(--hub-surface); transition: background 0.1s, border-color 0.1s; }
 .bead-close-check:checked { background: var(--color-orange-ui); border-color: var(--color-orange-ui); }
 .bead-close-check:hover:not(:checked) { border-color: var(--hub-text-fade); background: rgba(60,61,60,0.12); }
 .bead-priority {
