@@ -48,12 +48,13 @@ export default function BeadItem({ bead, onNewSession, onClosed }) {
   return (
     <div className={`bead-item${closing ? ' bead-item-closing' : ''}`}>
       <div className="bead-main">
-        <button
+        <input
+          type="checkbox"
           className="bead-close-check"
-          onClick={handleClose}
-          disabled={closing}
+          checked={closing}
+          onChange={handleClose}
           title="Close bead"
-        >{closing ? '✓' : '○'}</button>
+        />
         <span className="bead-id">{bead.id}</span>
         <span className="bead-title">{bead.title}</span>
       </div>
