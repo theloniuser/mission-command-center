@@ -868,8 +868,13 @@ html[data-theme="dark"] .eyebrow {
 .new-bead-status.error { color: var(--color-orange-ui); }
 
 /* ── Brain items panel ───────────────────────────────────── */
-.brain-item { padding: 4px 12px 4px 12px; display: flex; flex-direction: column; gap: 1px; }
+.brain-item { padding: 4px 8px 4px 12px; display: flex; align-items: flex-start; gap: 4px; }
+.brain-item-body { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .brain-item-text { font-size: 12px; color: var(--hub-text); line-height: 1.4; }
+.brain-item-promote { flex-shrink: 0; background: none; border: 1px solid var(--hub-btn-border); border-radius: 3px; padding: 1px 5px; font-size: 11px; color: var(--hub-text-fade); cursor: pointer; line-height: 1.4; }
+.brain-item-promote:hover { color: var(--color-orange-ui); border-color: var(--color-orange-ui); background: none; }
+.brain-item-promote:disabled { opacity: 0.4; cursor: default; }
+.brain-item-promoted { font-size: 11px; color: var(--hub-text-fade); padding: 4px 12px; font-style: italic; }
 .brain-all-clear { padding: 3px 12px 6px; font-size: 11px; color: var(--hub-text-fade); }
 
 /* ── Scripts sidebar panel ───────────────────────────────── */

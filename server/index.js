@@ -131,6 +131,56 @@ app.post('/api/beads/new', async (req, res) => {
   }
 })
 
+// ── Promote brain item → beads backlog ───────────────────
+// Creates a bead and marks the brain item RESOLVED in one shot.
+
+app.post('/api/promote-to-backlog', async (req, res) => {
+  const { title, prefix } = req.body  // prefix = 'To do:' | 'For Claude:'
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' })
+
+  const settings = readConfig('settings.json')
+  const endpointUrl = settings.customAction?.endpoint_url
+  const keyVar      = settings.customAction?.api_key_env_var || 'BRAIN_API_KEY'
+  const apiKey      = readEnvKey(keyVar)
+
+  const errors = []
+
+  // 1. Create bead
+  try {
+    const safe = title.trim().replace(/"/g, '\\"')
+    await execAsync(`bd add "${safe}"`, {
+      env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
+    })
+  } catch (err) {
+    errors.push(`bd add failed: ${err.message}`)
+  }
+
+  // 2. Capture RESOLVED to brain
+  if (endpointUrl && apiKey) {
+    const resolvedText = `RESOLVED: ${prefix} ${title}`.trim()
+    try {
+      await fetch(endpointUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+        body: JSON.stringify({ text: resolvedText }),
+      })
+    } catch (err) {
+      errors.push(`brain capture failed: ${err.message}`)
+    }
+  }
+
+  // 3. Regenerate backlog in background
+  const scriptPath = resolve(_serverDir, '../../scripts/generate-backlog.sh')
+  if (existsSync(scriptPath)) {
+    execAsync(`bash "${scriptPath}"`, {
+      env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
+    }).catch(() => {})
+  }
+
+  if (errors.length) return res.status(207).json({ ok: false, errors })
+  res.json({ ok: true })
+})
+
 // ── Launch ────────────────────────────────────────────────
 
 app.post('/api/launch', async (req, res) => {
