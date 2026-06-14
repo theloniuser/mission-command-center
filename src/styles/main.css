@@ -946,6 +946,7 @@ html[data-theme="dark"] .eyebrow {
   color: var(--hub-text); font-size: 13px;
 }
 .modal-error { color: var(--color-orange-ui); font-size: 12px; margin: 0; }
+.modal-browse-path { font-size: 11px; color: var(--hub-text-fade); font-family: monospace; padding: 4px 8px; background: var(--hub-surface-h); border-radius: var(--radius-sm); word-break: break-all; }
 .modal-footer {
   display: flex; gap: 8px; justify-content: flex-end;
   padding: 12px 20px 16px;
