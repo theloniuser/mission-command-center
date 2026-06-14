@@ -36,6 +36,11 @@ export default function BeadsPanel({ onNewSession, refreshTick, onRefreshDone })
   useEffect(() => { fetchBeads() }, [])
   useEffect(() => { if (refreshTick > 0) fetchBeads(true) }, [refreshTick])
   useEffect(() => { const id = setInterval(fetchBeads, 60_000); return () => clearInterval(id) }, [])
+  useEffect(() => {
+    const handler = () => fetchBeads(true)
+    window.addEventListener('backlog-updated', handler)
+    return () => window.removeEventListener('backlog-updated', handler)
+  }, [])
 
   if (loading) return <p className="sidebar-empty">Loading backlog...</p>
   if (error)   return <p className="sidebar-empty sidebar-error">{error}</p>

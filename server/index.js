@@ -122,7 +122,7 @@ app.post('/api/beads/new', async (req, res) => {
   if (!title?.trim()) return res.status(400).json({ error: 'title required' })
   try {
     const safe = title.trim().replace(/"/g, '\\"')
-    await execAsync(`bd add "${safe}"`, {
+    await execAsync(`bd q "${safe}"`, {
       env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
     })
     res.json({ ok: true })
@@ -148,7 +148,7 @@ app.post('/api/promote-to-backlog', async (req, res) => {
   // 1. Create bead
   try {
     const safe = title.trim().replace(/"/g, '\\"')
-    await execAsync(`bd add "${safe}"`, {
+    await execAsync(`bd q "${safe}"`, {
       env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
     })
   } catch (err) {

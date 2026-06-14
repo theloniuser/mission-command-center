@@ -18,7 +18,13 @@ function ItemRow({ item, prefix, onPromoted }) {
       })
       if (!res.ok) throw new Error()
       setStatus('ok')
-      setTimeout(() => onPromoted && onPromoted(), 6000)
+      // Trigger beads panel refresh immediately (bead already created)
+      window.dispatchEvent(new CustomEvent('backlog-updated'))
+      // Trigger brain items refresh after regen (~6s)
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('brain-captured'))
+        onPromoted && onPromoted()
+      }, 6000)
     } catch {
       setStatus('error')
       setTimeout(() => setStatus(null), 3000)
