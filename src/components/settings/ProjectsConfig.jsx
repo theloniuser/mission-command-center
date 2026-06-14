@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 const EMPTY_FORM = { name: '', path: '', launch_command: '' }
 
 export default function ProjectsConfig({ projects, onRefresh }) {
@@ -16,7 +17,7 @@ export default function ProjectsConfig({ projects, onRefresh }) {
   async function handleBrowse() {
     setBrowsing(true)
     try {
-      const res = await fetch('/api/browse-folder', { method: 'POST' })
+      const res = await fetch(`${API_BASE}/api/browse-folder`, { method: 'POST' })
       const data = await res.json()
       if (data.path) setForm(f => ({ ...f, path: data.path.replace(/\/$/, '') }))
     } catch {}
@@ -33,13 +34,13 @@ export default function ProjectsConfig({ projects, onRefresh }) {
     setSaving(true)
     try {
       if (editingId) {
-        await fetch(`/api/projects/${editingId}`, {
+        await fetch(`${API_BASE}/api/projects/${editingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form),
         })
       } else {
-        await fetch('/api/projects', {
+        await fetch(`${API_BASE}/api/projects`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form),
@@ -67,7 +68,7 @@ export default function ProjectsConfig({ projects, onRefresh }) {
   }
 
   async function handleDelete(id) {
-    await fetch(`/api/projects/${id}`, { method: 'DELETE' })
+    await fetch(`${API_BASE}/api/projects/${id}`, { method: 'DELETE' })
     onRefresh()
   }
 

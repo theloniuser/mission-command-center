@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 const AGENT_TYPES = ['Claude Code', 'claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5']
 const MODELS      = ['claude-sonnet-4-6', 'claude-opus-4-8', 'claude-haiku-4-5']
 
@@ -14,7 +15,7 @@ export default function LauncherModal({ isOpen, initialBead, onClose }) {
 
   useEffect(() => {
     if (!isOpen) return
-    fetch('/api/projects').then(r => r.json()).then(data => {
+    fetch(`${API_BASE}/api/projects`).then(r => r.json()).then(data => {
       setProjects(data)
       if (data.length) setProjectId(data[0].id)
     })
@@ -31,7 +32,7 @@ export default function LauncherModal({ isOpen, initialBead, onClose }) {
       const command = beadTitle
         ? `claude --context "${beadTitle.replace(/"/g, '\\"')}"`
         : 'claude'
-      const res = await fetch('/api/launch', {
+      const res = await fetch(`${API_BASE}/api/launch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectPath: project.path, command }),

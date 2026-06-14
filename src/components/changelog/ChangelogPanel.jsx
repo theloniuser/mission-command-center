@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import ChangelogEntry from './ChangelogEntry.jsx'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 export default function ChangelogPanel({ projectId }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
   function fetchChangelogs() {
-    fetch(`/api/changelogs/${projectId}`)
+    fetch(`${API_BASE}/api/changelogs/${projectId}`)
       .then(r => r.json())
       .then(data => { setEntries(data); setLoading(false); setError(null) })
       .catch(() => { setError('Failed to load changelogs'); setLoading(false) })

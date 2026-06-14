@@ -1,8 +1,14 @@
 import express from 'express'
 import cors from 'cors'
 import { randomUUID } from 'crypto'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 import { readFileSync, existsSync, createReadStream } from 'fs'
-import { extname } from 'path'
+import { extname, resolve, dirname as _dirOf } from 'path'
+import { fileURLToPath } from 'url'
+
+const execAsync = promisify(exec)
+const _serverDir = _dirOf(fileURLToPath(import.meta.url))
 import { readConfig, writeConfig } from './configManager.js'
 import { scanAllSessions } from './sessionScanner.js'
 import { scanBeads } from './beadsScanner.js'
@@ -86,6 +92,19 @@ app.get('/api/sessions', (req, res) => {
   }
 })
 
+// ── Brain items (from tools/backlog.json) ─────────────────
+
+app.get('/api/brain-items', (req, res) => {
+  try {
+    const backlogPath = resolve(_serverDir, '../../tools/backlog.json')
+    if (!existsSync(backlogPath)) return res.json({ for_claude: [], to_do: [] })
+    const data = JSON.parse(readFileSync(backlogPath, 'utf8'))
+    res.json(data.brain || { for_claude: [], to_do: [] })
+  } catch {
+    res.json({ for_claude: [], to_do: [] })
+  }
+})
+
 // ── Beads ─────────────────────────────────────────────────
 
 app.get('/api/beads', async (req, res) => {
@@ -95,6 +114,20 @@ app.get('/api/beads', async (req, res) => {
   } catch (err) {
     console.error('beadsScanner error:', err)
     res.status(500).json({ groups: [] })
+  }
+})
+
+app.post('/api/beads/new', async (req, res) => {
+  const { title } = req.body
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' })
+  try {
+    const safe = title.trim().replace(/"/g, '\\"')
+    await execAsync(`bd add "${safe}"`, {
+      env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
+    })
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
 })
 
@@ -130,8 +163,8 @@ app.post('/api/brain-capture', async (req, res) => {
   try {
     const response = await fetch(endpointUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ thought: text }),
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+      body: JSON.stringify({ text }),
     })
     const data = await response.json().catch(() => ({}))
     if (!response.ok) return res.status(502).json({ error: 'Brain API error', status: response.status, data })
@@ -216,8 +249,22 @@ app.put('/api/settings', (req, res) => {
   res.json(updated)
 })
 
+// ── Static frontend (serves dist/ so Thelonius is self-contained) ──
+
+const distPath = resolve(_serverDir, '../dist')
+
+if (existsSync(distPath)) {
+  app.use('/ads-command-center', express.static(distPath))
+  app.get('/ads-command-center/*', (req, res) => {
+    const idx = resolve(distPath, 'index.html')
+    if (existsSync(idx)) res.sendFile(idx)
+    else res.status(404).end()
+  })
+  app.get('/', (req, res) => res.redirect('/ads-command-center/'))
+}
+
 // ── Start ─────────────────────────────────────────────────
 
 app.listen(PORT, () => {
-  console.log(`ADS Command Center API running at http://localhost:${PORT}`)
+  console.log(`ADS Command Center running at http://localhost:${PORT}`)
 })

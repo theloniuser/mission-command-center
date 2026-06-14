@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 const BrandContext = createContext({ brandMode: 'ADS', brandConfig: {}, applyBrand: () => {} })
 
 function getLinkHref(config) {
@@ -28,7 +30,7 @@ export function BrandProvider({ children }) {
   const [brandConfig, setBrandConfig] = useState({ theme_mode: 'ADS', token_css_path: '', logo_path: '', primary_color: '' })
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch(`${API_BASE}/api/settings`)
       .then(r => r.json())
       .then(data => {
         if (data.brand) {

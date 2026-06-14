@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useBrand } from '../../context/BrandContext.jsx'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 export default function SettingsForm({ settings, onSaved }) {
   const [form, setForm] = useState(settings)
   const [saving, setSaving] = useState(false)
@@ -27,7 +29,7 @@ export default function SettingsForm({ settings, onSaved }) {
     e.preventDefault()
     setSaving(true)
     try {
-      await fetch('/api/settings', {
+      await fetch(`${API_BASE}/api/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

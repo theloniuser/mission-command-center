@@ -7,8 +7,8 @@
   },
   "customAction": {
     "name": "Capture to Brain",
-    "endpoint_url": "",
-    "api_key_env_var": "CAPTURE_API_KEY"
+    "endpoint_url": "https://qmgoolrezwoubxgrbada.supabase.co/functions/v1/capture",
+    "api_key_env_var": "BRAIN_API_KEY"
   },
   "brand": {
     "theme_mode": "ADS",

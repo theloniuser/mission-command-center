@@ -33,23 +33,31 @@ export default function BrainCapture({ inline = false }) {
     }
   }
 
-  if (inline) return (
-    <div className="brain-capture-inline">
-      <input
-        className="brain-capture-input-inline"
-        placeholder="Capture a thought to Brain..."
-        value={text}
-        onChange={e => setText(e.target.value)}
-        onKeyDown={handleKeyDown}
-        disabled={status === 'sending'}
-      />
-      <button
-        className="bead-btn brain-capture-send"
-        onClick={submit}
-        disabled={!text.trim() || status === 'sending'}
-      >{status === 'ok' ? 'Captured ✓' : status === 'sending' ? '…' : 'Send'}</button>
-    </div>
-  )
+  if (inline) {
+    if (status === 'ok') return (
+      <div className="brain-capture-inline">
+        <span className="brain-capture-confirmed">Captured to Brain ✓</span>
+      </div>
+    )
+    return (
+      <div className="brain-capture-inline">
+        <input
+          className="brain-capture-input-inline"
+          placeholder="Capture a thought to Brain..."
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={status === 'sending'}
+        />
+        {status === 'error' && <span className="brain-capture-err">Failed</span>}
+        <button
+          className="bead-btn brain-capture-send"
+          onClick={submit}
+          disabled={!text.trim() || status === 'sending'}
+        >{status === 'sending' ? '…' : 'Send'}</button>
+      </div>
+    )
+  }
 
   return (
     <div className="brain-capture">

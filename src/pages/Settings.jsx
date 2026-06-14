@@ -2,17 +2,19 @@ import { useState, useEffect } from 'react'
 import ProjectsConfig from '../components/settings/ProjectsConfig.jsx'
 import SettingsForm from '../components/settings/SettingsForm.jsx'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 export default function Settings() {
   const [projects, setProjects] = useState([])
   const [settings, setSettings] = useState(null)
 
   async function loadProjects() {
-    const res = await fetch('/api/projects')
+    const res = await fetch(`${API_BASE}/api/projects`)
     setProjects(await res.json())
   }
 
   async function loadSettings() {
-    const res = await fetch('/api/settings')
+    const res = await fetch(`${API_BASE}/api/settings`)
     setSettings(await res.json())
   }
 

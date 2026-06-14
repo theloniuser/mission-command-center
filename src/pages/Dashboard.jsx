@@ -5,6 +5,7 @@ import ProjectTile from '../components/tiles/ProjectTile.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
 const STATUS_ORDER = { active: 0, idle: 1, closed: 2 }
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([])
@@ -12,7 +13,7 @@ export default function Dashboard() {
   const { sessions, loading: sessLoading, openLauncher } = useSession()
 
   useEffect(() => {
-    fetch('/api/projects')
+    fetch(`${API_BASE}/api/projects`)
       .then(r => r.json())
       .then(data => { setProjects(data); setProjLoading(false) })
       .catch(() => setProjLoading(false))

@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 export default function BrainCaptureModal({ isOpen, onClose }) {
   const [text,    setText]    = useState('')
   const [sending, setSending] = useState(false)
@@ -17,7 +19,7 @@ export default function BrainCaptureModal({ isOpen, onClose }) {
     if (!text.trim()) return
     setSending(true); setStatus(null)
     try {
-      const res = await fetch('/api/brain-capture', {
+      const res = await fetch(`${API_BASE}/api/brain-capture`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: text.trim() }),
