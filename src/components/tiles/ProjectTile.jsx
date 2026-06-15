@@ -41,8 +41,8 @@ export default function ProjectTile({ project }) {
   const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
   const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
 
-  const { activeTerminalId, openTerminal, closeTerminal } = useTerminal()
-  const isExpanded = activeTerminalId === project.id
+  const { activeTerminalIds, openTerminal, closeTerminal } = useTerminal()
+  const isExpanded = activeTerminalIds.has(project.id)
 
   const { alerts, dismiss } = useSession()
   const myAlerts = alerts.filter(a => a.projectId === project.id)
@@ -98,7 +98,7 @@ export default function ProjectTile({ project }) {
           <span className="tsb-item">{project.model ?? '—'}</span>
           <span className="tsb-divider" />
           <span className="tsb-item">{tokens > 0 ? `${tokens.toLocaleString()} tokens` : '—'}</span>
-          <button className="tsb-close" onClick={closeTerminal} aria-label="Close terminal">✕</button>
+          <button className="tsb-close" onClick={() => closeTerminal(project.id)} aria-label="Close terminal">✕</button>
         </div>
       </article>
     )

@@ -3,18 +3,27 @@ import { createContext, useContext, useState } from 'react'
 const TerminalContext = createContext(null)
 
 export function TerminalProvider({ children }) {
-  const [activeTerminalId, setActiveTerminalId] = useState(null)
+  const [activeTerminalIds, setActiveTerminalIds] = useState(new Set())
 
   function openTerminal(id) {
-    setActiveTerminalId(prev => (prev === id ? null : id))
+    setActiveTerminalIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
-  function closeTerminal() {
-    setActiveTerminalId(null)
+  function closeTerminal(id) {
+    setActiveTerminalIds(prev => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
   }
 
   return (
-    <TerminalContext.Provider value={{ activeTerminalId, openTerminal, closeTerminal }}>
+    <TerminalContext.Provider value={{ activeTerminalIds, openTerminal, closeTerminal }}>
       {children}
     </TerminalContext.Provider>
   )
