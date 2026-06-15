@@ -1,4 +1,8 @@
 import express from 'express'
+import http from 'http'
+import { WebSocketServer } from 'ws'
+import pty from 'node-pty'
+import os from 'os'
 import cors from 'cors'
 import { randomUUID } from 'crypto'
 import { exec } from 'child_process'
@@ -27,6 +31,7 @@ function readEnvKey(keyName) {
 }
 
 const app = express()
+const server = http.createServer(app)
 const PORT = 3001
 
 const TILE_COLORS = [
@@ -391,8 +396,52 @@ if (existsSync(distPath)) {
   app.get('/', (req, res) => res.redirect('/ads-command-center/'))
 }
 
+// ── WebSocket + PTY ───────────────────────────────────────
+
+const wss = new WebSocketServer({ server, path: '/terminal' })
+
+wss.on('connection', (ws) => {
+  let ptyProcess = null
+
+  ws.on('message', (raw) => {
+    let msg
+    try { msg = JSON.parse(raw) } catch { return }
+
+    if (msg.type === 'init' && !ptyProcess) {
+      const cwd = (msg.projectPath || os.homedir()).replace(/^~/, os.homedir())
+      ptyProcess = pty.spawn('/bin/zsh', [], {
+        name: 'xterm-color',
+        cols: msg.cols || 80,
+        rows: msg.rows || 24,
+        cwd,
+        env: { ...process.env, TERM: 'xterm-256color' },
+      })
+      ptyProcess.onData(data => {
+        if (ws.readyState === ws.OPEN) {
+          ws.send(JSON.stringify({ type: 'output', data }))
+        }
+      })
+      ptyProcess.onExit(() => {
+        if (ws.readyState === ws.OPEN) ws.close()
+      })
+    }
+
+    if (msg.type === 'input' && ptyProcess) {
+      ptyProcess.write(msg.data)
+    }
+
+    if (msg.type === 'resize' && ptyProcess) {
+      ptyProcess.resize(Math.max(1, msg.cols), Math.max(1, msg.rows))
+    }
+  })
+
+  ws.on('close', () => {
+    if (ptyProcess) { ptyProcess.kill(); ptyProcess = null }
+  })
+})
+
 // ── Start ─────────────────────────────────────────────────
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`ADS Command Center running at http://localhost:${PORT}`)
 })
