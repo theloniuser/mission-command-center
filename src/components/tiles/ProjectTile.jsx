@@ -25,7 +25,6 @@ function gaugeColor(pct) {
 }
 
 export default function ProjectTile({ project }) {
-  const [showChangelog, setShowChangelog] = useState(false)
   const tokens = project.token_count ?? 0
   const pct = Math.min(tokens / THRESHOLD_150K, 1)
   const status = project.status ?? 'no session'
@@ -41,8 +40,16 @@ export default function ProjectTile({ project }) {
   const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
   const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
 
-  const { activeTerminalIds, openTerminal, closeTerminal } = useTerminal()
+  const { activeTerminalIds, openTerminal, closeTerminal, sendCommand, activeChangelogId, openChangelog } = useTerminal()
   const isExpanded = activeTerminalIds.has(project.id)
+  const showChangelog = activeChangelogId === project.id
+  const changelogRef = useRef(null)
+
+  useEffect(() => {
+    if (showChangelog && changelogRef.current) {
+      changelogRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [showChangelog])
 
   const { alerts, dismiss } = useSession()
   const myAlerts = alerts.filter(a => a.projectId === project.id)
@@ -67,7 +74,7 @@ export default function ProjectTile({ project }) {
   }, [project.needs_response, play, getPrefs])
 
   function handleAlertAct(alert) {
-    if (alert.action) navigator.clipboard.writeText(alert.action)
+    if (alert.action) sendCommand(project.id, alert.action)
     dismiss(alert.id)
   }
 
@@ -87,7 +94,7 @@ export default function ProjectTile({ project }) {
     return (
       <article className="project-tile project-tile--expanded">
         <div className="tile-color-bar" style={{ background: project.color }} />
-        <TerminalPane projectPath={project.path} />
+        <TerminalPane projectPath={project.path} projectId={project.id} />
         <div className="tile-status-bar">
           <span className="tsb-name">{project.name}</span>
           <span className="tsb-divider" />
@@ -98,6 +105,9 @@ export default function ProjectTile({ project }) {
           <span className="tsb-item">{project.model ?? '—'}</span>
           <span className="tsb-divider" />
           <span className="tsb-item">{tokens > 0 ? `${tokens.toLocaleString()} tokens` : '—'}</span>
+          <span className="tsb-divider" />
+          <button className="tsb-cmd-btn" onClick={() => sendCommand(project.id, '/compact')}>/compact</button>
+          <button className="tsb-cmd-btn" onClick={() => sendCommand(project.id, '/handoff')}>/handoff</button>
           <button className="tsb-close" onClick={() => closeTerminal(project.id)} aria-label="Close terminal">✕</button>
         </div>
       </article>
@@ -200,10 +210,10 @@ export default function ProjectTile({ project }) {
           )}
         </div>
 
-        <div className="tile-changelog-section">
+        <div className="tile-changelog-section" ref={changelogRef}>
           <button
             className="changelog-toggle"
-            onClick={() => setShowChangelog(v => !v)}
+            onClick={() => openChangelog(project.id)}
             aria-expanded={showChangelog}
           >
             Changelog {showChangelog ? '▴' : '▾'}

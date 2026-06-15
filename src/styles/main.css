@@ -602,6 +602,37 @@ html:not([data-theme="dark"]) .tsb-close:hover {
   white-space: nowrap;
 }
 
+.tsb-cmd-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-family: monospace;
+  padding: 2px 7px;
+  border-radius: 3px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.tsb-cmd-btn:hover {
+  color: var(--color-orange-ui);
+  border-color: var(--color-orange-ui);
+  background: rgba(255,107,0,0.08);
+}
+
+html:not([data-theme="dark"]) .tsb-cmd-btn {
+  border-color: rgba(0,0,0,0.15);
+  color: rgba(0,0,0,0.45);
+}
+
+html:not([data-theme="dark"]) .tsb-cmd-btn:hover {
+  color: var(--color-orange-ui);
+  border-color: var(--color-orange-ui);
+  background: rgba(255,107,0,0.06);
+}
+
 .tsb-close {
   margin-left: auto;
   background: none;

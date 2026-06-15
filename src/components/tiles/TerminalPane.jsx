@@ -3,6 +3,7 @@ import { Terminal } from 'xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import 'xterm/css/xterm.css'
 import { useTheme } from '../../context/ThemeContext.jsx'
+import { useTerminal } from '../../context/TerminalContext.jsx'
 
 const DARK_THEME = {
   background: '#1c1c1c',
@@ -18,10 +19,11 @@ const LIGHT_THEME = {
   selectionBackground: 'rgba(255,107,0,0.2)',
 }
 
-export default function TerminalPane({ projectPath }) {
+export default function TerminalPane({ projectPath, projectId }) {
   const containerRef = useRef(null)
   const termRef = useRef(null)
   const { theme } = useTheme()
+  const { consumePendingCommand, registerTerminal, unregisterTerminal } = useTerminal()
 
   useEffect(() => {
     if (termRef.current) {
@@ -51,6 +53,21 @@ export default function TerminalPane({ projectPath }) {
     ws.onopen = () => {
       const { cols, rows } = term
       ws.send(JSON.stringify({ type: 'init', projectPath, cols, rows }))
+
+      registerTerminal(projectId, (data) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'input', data }))
+        }
+      })
+
+      const pending = consumePendingCommand(projectId)
+      if (pending) {
+        setTimeout(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'input', data: pending + '\n' }))
+          }
+        }, 700)
+      }
     }
 
     ws.onmessage = (e) => {
@@ -73,6 +90,7 @@ export default function TerminalPane({ projectPath }) {
     ro.observe(containerRef.current)
 
     return () => {
+      unregisterTerminal(projectId)
       ro.disconnect()
       ws.close()
       term.dispose()
