@@ -10,6 +10,8 @@ const DARK_THEME = {
   foreground: '#e8e8e8',
   cursor: '#ff6b00',
   selectionBackground: 'rgba(255,107,0,0.3)',
+  red: '#ff6b00',
+  brightRed: '#ff8c38',
 }
 
 const LIGHT_THEME = {
@@ -17,6 +19,8 @@ const LIGHT_THEME = {
   foreground: '#1e1e1e',
   cursor: '#e05a00',
   selectionBackground: 'rgba(255,107,0,0.2)',
+  red: '#e05a00',
+  brightRed: '#ff6b00',
 }
 
 export default function TerminalPane({ projectPath, projectId }) {
@@ -97,6 +101,16 @@ export default function TerminalPane({ projectPath, projectId }) {
       termRef.current = null
     }
   }, [projectPath])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const block = (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault()
+    }
+    el.addEventListener('wheel', block, { passive: false })
+    return () => el.removeEventListener('wheel', block)
+  }, [])
 
   return <div className="terminal-container" ref={containerRef} />
 }
