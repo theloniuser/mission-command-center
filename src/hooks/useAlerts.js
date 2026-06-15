@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 
 const THRESHOLD_MAP = [
   { key: '80k',  limit: 80000,  action: '/compact', label: '/compact' },
-  { key: '120k', limit: 120000, action: '/handoff', label: '/handoff' },
+  { key: '120k', limit: 120000, action: '/session-handoff', label: '/handoff' },
   { key: '150k', limit: 150000, action: '/clear',   label: '/clear'   },
 ]
 

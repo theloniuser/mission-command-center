@@ -107,7 +107,7 @@ export default function ProjectTile({ project }) {
           <span className="tsb-item">{tokens > 0 ? `${tokens.toLocaleString()} tokens` : '—'}</span>
           <span className="tsb-divider" />
           <button className="tsb-cmd-btn" onClick={() => sendCommand(project.id, '/compact')}>/compact</button>
-          <button className="tsb-cmd-btn" onClick={() => sendCommand(project.id, '/handoff')}>/handoff</button>
+          <button className="tsb-cmd-btn" onClick={() => sendCommand(project.id, '/session-handoff')}>/handoff</button>
           <button className="tsb-close" onClick={() => closeTerminal(project.id)} aria-label="Close terminal">✕</button>
         </div>
       </article>
