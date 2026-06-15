@@ -7,6 +7,7 @@ export function TerminalProvider({ children }) {
   const [activeChangelogId, setActiveChangelogId] = useState(null)
   const pendingCommandsRef = useRef({})
   const terminalWritersRef = useRef({})
+  const terminalFocusRef  = useRef({})
 
   function openTerminal(id) {
     setActiveTerminalIds(prev => {
@@ -28,7 +29,8 @@ export function TerminalProvider({ children }) {
   function sendCommand(id, command) {
     const writer = terminalWritersRef.current[id]
     if (writer) {
-      writer(command + '\n')
+      writer(command)
+      terminalFocusRef.current[id]?.()
     } else {
       openTerminal(id)
       pendingCommandsRef.current[id] = command
@@ -49,6 +51,14 @@ export function TerminalProvider({ children }) {
     delete terminalWritersRef.current[id]
   }
 
+  function registerTerminalFocus(id, focusFn) {
+    terminalFocusRef.current[id] = focusFn
+  }
+
+  function unregisterTerminalFocus(id) {
+    delete terminalFocusRef.current[id]
+  }
+
   function openChangelog(id) {
     setActiveChangelogId(prev => (prev === id ? null : id))
   }
@@ -57,6 +67,7 @@ export function TerminalProvider({ children }) {
     <TerminalContext.Provider value={{
       activeTerminalIds, openTerminal, closeTerminal,
       sendCommand, consumePendingCommand, registerTerminal, unregisterTerminal,
+      registerTerminalFocus, unregisterTerminalFocus,
       activeChangelogId, openChangelog,
     }}>
       {children}

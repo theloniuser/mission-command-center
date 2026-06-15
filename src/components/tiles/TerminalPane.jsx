@@ -27,7 +27,7 @@ export default function TerminalPane({ projectPath, projectId }) {
   const containerRef = useRef(null)
   const termRef = useRef(null)
   const { theme } = useTheme()
-  const { consumePendingCommand, registerTerminal, unregisterTerminal } = useTerminal()
+  const { consumePendingCommand, registerTerminal, unregisterTerminal, registerTerminalFocus, unregisterTerminalFocus } = useTerminal()
 
   useEffect(() => {
     if (termRef.current) {
@@ -63,12 +63,14 @@ export default function TerminalPane({ projectPath, projectId }) {
           ws.send(JSON.stringify({ type: 'input', data }))
         }
       })
+      registerTerminalFocus(projectId, () => term.focus())
 
       const pending = consumePendingCommand(projectId)
       if (pending) {
         setTimeout(() => {
           if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'input', data: pending + '\n' }))
+            ws.send(JSON.stringify({ type: 'input', data: pending }))
+            term.focus()
           }
         }, 700)
       }
@@ -95,6 +97,7 @@ export default function TerminalPane({ projectPath, projectId }) {
 
     return () => {
       unregisterTerminal(projectId)
+      unregisterTerminalFocus(projectId)
       ro.disconnect()
       ws.close()
       term.dispose()
