@@ -73,10 +73,32 @@ body {
   z-index: 1;
 }
 
+.site-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .site-logo img {
   height: var(--nav-logo-height);
   width: auto;
   display: block;
+}
+
+.site-title {
+  font-family: var(--font-heading);
+  font-size: 40px;
+  font-weight: var(--font-weight-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--hub-text);
+  margin-left: 30px;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-orange);
+}
+
+[data-theme='dark'] .site-title {
+  color: var(--color-white);
 }
 
 .header-right {
@@ -465,6 +487,120 @@ body {
   color: var(--hub-text-fade);
   text-align: right;
   margin-top: var(--space-2);
+}
+
+/* ── Expanded terminal tile ── */
+.project-tile--expanded {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  background: #111111;
+  border: 1px solid var(--color-orange);
+  transition: none;
+}
+
+.terminal-container {
+  flex: 1;
+  padding: var(--space-3) var(--space-3) 0;
+  overflow: hidden;
+  min-height: 360px;
+}
+
+.terminal-container .xterm {
+  height: 100%;
+}
+
+.terminal-container .xterm-viewport {
+  border-radius: 0;
+}
+
+/* ── Tile status bar (bottom strip on expanded tile) ── */
+.tile-status-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: #1e1e1e;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.55);
+  flex-shrink: 0;
+}
+
+.tsb-name {
+  font-weight: 600;
+  color: var(--color-white);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.tsb-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+}
+
+.tsb-badge.status-active { color: var(--color-blue); }
+.tsb-badge.status-idle   { color: rgba(255,255,255,0.4); }
+
+.tsb-divider {
+  width: 1px;
+  height: 12px;
+  background: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+
+.tsb-item {
+  white-space: nowrap;
+}
+
+.tsb-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+
+.tsb-close:hover {
+  color: var(--color-white);
+  background: rgba(255,255,255,0.08);
+}
+
+/* ── Terminal icon button on normal tile ── */
+.tile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tile-terminal-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--hub-text-fade);
+  font-size: 0.8rem;
+  font-family: monospace;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+
+.tile-terminal-btn:hover {
+  color: var(--color-orange-ui);
+  background: rgba(255,107,0,0.08);
 }
 
 /* ── Settings page ── */
