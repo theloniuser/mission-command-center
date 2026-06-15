@@ -47,6 +47,10 @@ const TILE_COLORS = [
 app.use(cors())
 app.use(express.json())
 
+// Tracks items promoted to backlog — filters them from /api/brain-items until
+// generate-backlog.sh catches up and removes them from backlog.json
+const recentlyPromoted = new Map() // text -> timestamp (10-min TTL)
+
 // ── Projects ──────────────────────────────────────────────
 
 app.get('/api/projects', (req, res) => {
@@ -105,7 +109,25 @@ app.get('/api/brain-items', (req, res) => {
     const backlogPath = resolve(_serverDir, '../../tools/backlog.json')
     if (!existsSync(backlogPath)) return res.json({ for_claude: [], to_do: [] })
     const data = JSON.parse(readFileSync(backlogPath, 'utf8'))
-    res.json(data.brain || { for_claude: [], to_do: [] })
+    const brain = data.brain || { for_claude: [], to_do: [] }
+
+    // Prune expired entries
+    const now = Date.now()
+    const TTL = 10 * 60 * 1000
+    for (const [k, ts] of recentlyPromoted.entries()) {
+      if (now - ts > TTL) recentlyPromoted.delete(k)
+    }
+
+    const filterOut = items => items.filter(item => {
+      const text = typeof item === 'string' ? item : (item.body || item.text || '')
+      return !recentlyPromoted.has(text.trim())
+    })
+
+    res.json({
+      ...brain,
+      for_claude: filterOut(brain.for_claude || []),
+      to_do:      filterOut(brain.to_do      || []),
+    })
   } catch {
     res.json({ for_claude: [], to_do: [] })
   }
@@ -239,6 +261,7 @@ app.post('/api/promote-to-backlog', async (req, res) => {
   }
 
   if (errors.length) return res.status(207).json({ ok: false, errors })
+  recentlyPromoted.set(title.trim(), Date.now())
   res.json({ ok: true })
 })
 
