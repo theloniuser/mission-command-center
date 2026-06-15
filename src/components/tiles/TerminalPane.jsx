@@ -2,9 +2,32 @@ import { useEffect, useRef } from 'react'
 import { Terminal } from 'xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import 'xterm/css/xterm.css'
+import { useTheme } from '../../context/ThemeContext.jsx'
+
+const DARK_THEME = {
+  background: '#1c1c1c',
+  foreground: '#e8e8e8',
+  cursor: '#ff6b00',
+  selectionBackground: 'rgba(255,107,0,0.3)',
+}
+
+const LIGHT_THEME = {
+  background: '#f8f8f7',
+  foreground: '#1e1e1e',
+  cursor: '#e05a00',
+  selectionBackground: 'rgba(255,107,0,0.2)',
+}
 
 export default function TerminalPane({ projectPath }) {
   const containerRef = useRef(null)
+  const termRef = useRef(null)
+  const { theme } = useTheme()
+
+  useEffect(() => {
+    if (termRef.current) {
+      termRef.current.options.theme = theme === 'dark' ? DARK_THEME : LIGHT_THEME
+    }
+  }, [theme])
 
   useEffect(() => {
     const term = new Terminal({
@@ -12,13 +35,9 @@ export default function TerminalPane({ projectPath }) {
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       fontSize: 13,
       lineHeight: 1.4,
-      theme: {
-        background: '#111111',
-        foreground: '#e8e8e8',
-        cursor: '#ff6b00',
-        selectionBackground: 'rgba(255,107,0,0.3)',
-      },
+      theme: theme === 'dark' ? DARK_THEME : LIGHT_THEME,
     })
+    termRef.current = term
 
     const fitAddon = new FitAddon()
     term.loadAddon(fitAddon)
@@ -57,6 +76,7 @@ export default function TerminalPane({ projectPath }) {
       ro.disconnect()
       ws.close()
       term.dispose()
+      termRef.current = null
     }
   }, [projectPath])
 
