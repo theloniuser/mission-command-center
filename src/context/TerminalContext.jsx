@@ -29,8 +29,7 @@ export function TerminalProvider({ children }) {
   function sendCommand(id, command) {
     const writer = terminalWritersRef.current[id]
     if (writer) {
-      writer(command)
-      terminalFocusRef.current[id]?.()
+      writer(command + '\r')
     } else {
       openTerminal(id)
       pendingCommandsRef.current[id] = command
