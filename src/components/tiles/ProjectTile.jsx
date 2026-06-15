@@ -3,6 +3,8 @@ import McpBadge from './McpBadge.jsx'
 import ChangelogPanel from '../changelog/ChangelogPanel.jsx'
 import { useAudio, SOUNDS } from '../../hooks/useAudio.js'
 import { useSession } from '../../context/SessionContext.jsx'
+import { useTerminal } from '../../context/TerminalContext.jsx'
+import TerminalPane from './TerminalPane.jsx'
 
 const THRESHOLD_80K  = 80000
 const THRESHOLD_120K = 120000
@@ -38,6 +40,9 @@ export default function ProjectTile({ project }) {
   const audioPrefs = getPrefs()
   const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
   const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
+
+  const { activeTerminalId, openTerminal, closeTerminal } = useTerminal()
+  const isExpanded = activeTerminalId === project.id
 
   const { alerts, dismiss } = useSession()
   const myAlerts = alerts.filter(a => a.projectId === project.id)
@@ -78,6 +83,27 @@ export default function ProjectTile({ project }) {
     play(e.target.value)
   }
 
+  if (isExpanded) {
+    return (
+      <article className="project-tile project-tile--expanded">
+        <div className="tile-color-bar" style={{ background: project.color }} />
+        <TerminalPane projectPath={project.path} />
+        <div className="tile-status-bar">
+          <span className="tsb-name">{project.name}</span>
+          <span className="tsb-divider" />
+          <span className={`tsb-badge status-${status.replace(' ', '-')}`}>{status}</span>
+          <span className="tsb-divider" />
+          <span className="tsb-item">{project.agent_type ?? 'Claude Code'}</span>
+          <span className="tsb-divider" />
+          <span className="tsb-item">{project.model ?? '—'}</span>
+          <span className="tsb-divider" />
+          <span className="tsb-item">{tokens > 0 ? `${tokens.toLocaleString()} tokens` : '—'}</span>
+          <button className="tsb-close" onClick={closeTerminal} aria-label="Close terminal">✕</button>
+        </div>
+      </article>
+    )
+  }
+
   return (
     <article className="project-tile">
       <div className="tile-color-bar" style={{ background: project.color }} />
@@ -85,9 +111,19 @@ export default function ProjectTile({ project }) {
       <div className="tile-body">
         <div className="tile-header">
           <h2 className="tile-project-name">{project.name}</h2>
-          <span className={`tile-status-badge status-${status.replace(' ', '-')}`}>
-            {status}
-          </span>
+          <div className="tile-header-actions">
+            <button
+              className="tile-terminal-btn"
+              onClick={() => openTerminal(project.id)}
+              aria-label="Open terminal"
+              title={`Open terminal in ${project.name}`}
+            >
+              &gt;_
+            </button>
+            <span className={`tile-status-badge status-${status.replace(' ', '-')}`}>
+              {status}
+            </span>
+          </div>
         </div>
 
         <div className="tile-meta">
