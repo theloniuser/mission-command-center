@@ -23,7 +23,7 @@ function Logo({ theme, brandMode, brandConfig }) {
       />
     )
   }
-  return <span className="site-logo-wordmark">Command Center</span>
+  return null
 }
 
 export default function Header() {
@@ -36,6 +36,7 @@ export default function Header() {
       <div className="header-inner">
         <span className="site-logo">
           <Logo theme={theme} brandMode={brandMode} brandConfig={brandConfig} />
+          <span className="site-title">Command Center</span>
         </span>
 
         <div className="header-right">

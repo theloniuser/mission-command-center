@@ -54,7 +54,7 @@ export default function Dashboard() {
     <div className="page-layout">
       <main className="page-content">
         <div className="page-heading">
-          <h1>Command Center</h1>
+          <h1>Current Projects</h1>
         </div>
 
         {loading ? (

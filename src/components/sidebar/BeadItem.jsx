@@ -24,9 +24,25 @@ function formatNextRun(nextRunMs) {
 
 export default function BeadItem({ bead, onNewSession, onClosed }) {
   const [closing, setClosing] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   function handleCopy() {
-    navigator.clipboard.writeText(bead.title)
+    function markCopied() {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(bead.title).then(markCopied)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = bead.title
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      if (document.execCommand('copy')) markCopied()
+      document.body.removeChild(ta)
+    }
   }
 
   async function handleClose() {
@@ -70,7 +86,7 @@ export default function BeadItem({ bead, onNewSession, onClosed }) {
           Launch
         </button>
         <button className="bead-btn bead-copy" onClick={handleCopy} title="Copy title to clipboard">
-          Copy
+          {copied ? '✓' : 'Copy'}
         </button>
       </div>
     </div>

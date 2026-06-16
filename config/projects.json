@@ -22,5 +22,13 @@
     "launch_command": "",
     "beads_ids": [],
     "color": "#2a9d8f"
+  },
+  {
+    "id": "2157428d-953c-46ad-9997-45c134f83c25",
+    "name": "br-sushibargrill-grove",
+    "path": "/Users/jamescantwell/ai-cli-projects/01-ACTIVE-CLIENTS/blue-ribbon-restaurants/projects/br-sushibargrill-grove",
+    "launch_command": "",
+    "beads_ids": [],
+    "color": "#7b68ee"
   }
 ]
