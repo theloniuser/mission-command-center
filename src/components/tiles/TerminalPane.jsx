@@ -59,7 +59,8 @@ export default function TerminalPane({ projectPath, projectId }) {
 
     requestAnimationFrame(() => fitAddon.fit())
 
-    const wsUrl = `ws://${window.location.host}/terminal`
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    const wsUrl = `${proto}://${window.location.host}/terminal`
     const ws = new WebSocket(wsUrl)
 
     ws.onopen = () => {
