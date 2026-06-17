@@ -38,13 +38,11 @@ export default function Dashboard() {
   const tiles = useMemo(() => {
     const sessionMap = Object.fromEntries(sessions.map(s => [s.projectId, s]))
     return projects
-      .map(p => ({ ...p, ...(sessionMap[p.id] ?? {}) }))
+      .map((p, i) => ({ ...p, _idx: i, ...(sessionMap[p.id] ?? {}) }))
       .sort((a, b) => {
         const so = (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2)
         if (so !== 0) return so
-        const ta = a.last_active_at ? new Date(a.last_active_at).getTime() : 0
-        const tb = b.last_active_at ? new Date(b.last_active_at).getTime() : 0
-        return tb - ta
+        return a._idx - b._idx  // stable within each status group — no jumping on poll
       })
   }, [projects, sessions])
 

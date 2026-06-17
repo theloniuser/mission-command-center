@@ -7,6 +7,8 @@ const CONFIG_DIR = join(__dirname, '..', 'config')
 
 const DEFAULTS = {
   'projects.json': [],
+  'tasks.json': [],
+  'temp-projects.json': [],
   'settings.json': {
     alerts: {
       compact_threshold: 80000,
@@ -20,11 +22,12 @@ const DEFAULTS = {
       api_key_env_var: 'CAPTURE_API_KEY',
     },
     brand: {
-      theme_mode: 'ADS',
+      theme_mode: 'Generic',
       token_css_path: '',
       logo_path: '',
       primary_color: '',
     },
+    backlogPath: '',
   },
 }
 
