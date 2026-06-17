@@ -22,9 +22,14 @@ function formatNextRun(nextRunMs) {
   return `${d}d`
 }
 
+const TITLE_LIMIT = 50
+
 export default function BeadItem({ bead, onNewSession, onClosed }) {
   const [closing, setClosing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const needsTrunc = bead.title.length > TITLE_LIMIT
+  const displayTitle = needsTrunc && !expanded ? bead.title.slice(0, TITLE_LIMIT) + '…' : bead.title
 
   function handleCopy() {
     function markCopied() {
@@ -72,7 +77,18 @@ export default function BeadItem({ bead, onNewSession, onClosed }) {
           title="Close bead"
         />
         <span className="bead-id">{bead.id}</span>
-        <span className="bead-title">{bead.title}</span>
+        <span className="bead-title">
+          {displayTitle}
+          {needsTrunc && (
+            <button
+              className="bead-title-toggle"
+              onClick={() => setExpanded(e => !e)}
+              title={expanded ? 'Show less' : 'Show more'}
+            >
+              {expanded ? 'less' : 'more'}
+            </button>
+          )}
+        </span>
       </div>
       {(bead.lastRun || bead.nextRunMs) && (
         <div className="bead-last-run">

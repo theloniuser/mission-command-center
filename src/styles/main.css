@@ -1037,6 +1037,17 @@ html[data-theme="dark"] .eyebrow {
   color: var(--hub-text);
   line-height: 1.4;
 }
+.bead-title-toggle {
+  background: none;
+  border: none;
+  padding: 0 0 0 4px;
+  font-size: 10px;
+  color: var(--hub-text-fade);
+  cursor: pointer;
+  vertical-align: baseline;
+  text-decoration: underline;
+}
+.bead-title-toggle:hover { color: var(--hub-text); }
 .bead-actions { display: flex; gap: 5px; }
 .bead-btn {
   font-size: 11px;
