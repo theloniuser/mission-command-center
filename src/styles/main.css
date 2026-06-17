@@ -1,41 +1,8 @@
-/* ADS hub theme tokens - pasted verbatim from decisions/ads-dark-light-toggle-spec.md */
+/* Local tokens not in ads-tokens.css — all hub-* vars come from ads-tokens.css */
 :root {
-  --hub-bg:            var(--color-gray-light);
-  --hub-header:        var(--color-white);
-  --hub-surface:       var(--color-white);
-  --hub-surface-h:     var(--color-charcoal-05);
-  --hub-border:        rgba(60, 61, 60, 0.10);
-  --hub-border-h:      rgba(60, 61, 60, 0.18);
-  --hub-text:          var(--color-charcoal);
-  --hub-text-fade:     rgba(60, 61, 60, 0.62);
-  --hub-divider:       rgba(60, 61, 60, 0.12);
-  --hub-btn-border:    rgba(60, 61, 60, 0.22);
-  --hub-btn-text:      var(--color-charcoal);
-  --hub-btn-text-fade: rgba(60, 61, 60, 0.62);
-  --hub-btn-hover:     rgba(60, 61, 60, 0.04);
-  --hub-focus-ring:    0 0 0 2px rgba(183, 91, 0, 0.12);
-  --hub-shadow-modal:  0 8px 32px rgba(0, 0, 0, 0.20);
-  --hub-overlay:       rgba(0, 0, 0, 0.45);
-}
-
-html[data-theme="dark"] {
-  --hub-bg:            var(--dark-bg,        oklch(25.6% 0.000 0));
-  --hub-header:        var(--dark-header,    var(--color-near-black));
-  --hub-surface:       var(--dark-surface,   oklch(30% 0.004 55));
-  --hub-surface-h:     var(--dark-surface-h, oklch(33% 0.004 55));
-  --hub-border:        rgba(255, 255, 255, 0.10);
-  --hub-border-h:      rgba(255, 255, 255, 0.20);
-  --hub-text:          var(--color-white);
-  --hub-text-fade:     rgba(255, 255, 255, 0.60);
-  --hub-divider:       rgba(255, 255, 255, 0.10);
-  --hub-btn-border:    rgba(255, 255, 255, 0.18);
-  --hub-btn-text:      rgba(255, 255, 255, 0.85);
-  --hub-btn-text-fade: rgba(255, 255, 255, 0.55);
-  --hub-btn-hover:     rgba(255, 255, 255, 0.06);
-}
-
-html[data-theme="dark"] .site-texture {
-  opacity: 0.12;
+  --hub-focus-ring:   0 0 0 2px rgba(183, 91, 0, 0.12);
+  --hub-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.20);
+  --hub-overlay:      rgba(0, 0, 0, 0.45);
 }
 
 /* ── Base ── */
@@ -63,6 +30,21 @@ body {
   border-bottom: var(--nav-border-bottom, 3px solid var(--color-orange));
   transition: background 0.2s;
 }
+
+.site-texture {
+  position: absolute;
+  right: var(--nav-texture-right);
+  top: var(--nav-texture-top);
+  width: var(--nav-texture-width);
+  height: auto;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--nav-texture-opacity);
+  color: var(--hub-text, var(--color-charcoal));
+}
+
+html[data-theme="light"] .site-texture { opacity: var(--nav-texture-opacity-light); }
+html[data-theme="dark"]  .site-texture { opacity: 0.12; }
 
 .header-inner {
   display: flex;
@@ -92,9 +74,9 @@ body {
   letter-spacing: -0.02em;
   line-height: 1.1;
   color: var(--hub-text);
-  margin-left: 30px;
+  margin-left: var(--space-4);
   padding-left: var(--space-3);
-  border-left: 2px solid var(--color-orange);
+  border-left: 3px solid var(--color-orange);
 }
 
 [data-theme='dark'] .site-title {
@@ -462,7 +444,7 @@ body {
   gap: 4px;
   font-size: var(--font-size-label);
   padding: 2px 6px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: var(--hub-surface-h);
   color: var(--hub-text-fade);
   border: 1px solid var(--hub-border);
@@ -1198,7 +1180,7 @@ html[data-theme="dark"] .eyebrow {
 .folder-browser-path { font-size: 10px; font-family: monospace; color: var(--hub-text-fade); padding: 5px 10px; background: var(--hub-surface-h); border-bottom: 1px solid var(--hub-border); word-break: break-all; }
 .folder-browser-list { max-height: 160px; overflow-y: auto; }
 .folder-browser-item { padding: 5px 10px; font-size: 12px; cursor: pointer; color: var(--hub-text); display: flex; align-items: center; gap: 6px; }
-.folder-browser-item::before { content: '📁'; font-size: 11px; }
+.folder-browser-item::before { content: '/'; font-size: 11px; color: var(--hub-text-fade); }
 .folder-browser-up::before { content: ''; }
 .folder-browser-item:hover { background: var(--hub-surface-h); }
 .folder-browser-empty { padding: 8px 10px; font-size: 11px; color: var(--hub-text-fade); }
@@ -1222,7 +1204,7 @@ html[data-theme="dark"] .eyebrow {
 .modal-btn-cancel:hover { background: var(--hub-btn-hover); }
 .modal-btn-primary {
   padding: 7px 16px; border-radius: var(--radius-md); font-size: 13px;
-  background: var(--color-orange-ui); color: var(--color-white);
+  background: var(--color-orange); color: var(--color-charcoal);
   border: none; cursor: pointer; font-weight: 600;
 }
 .modal-btn-primary:hover { opacity: 0.9; }
