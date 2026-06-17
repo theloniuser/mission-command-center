@@ -71,17 +71,24 @@ export async function scanBeads() {
     b.nextRunMs = nextRunMs
   }))
 
-  // group by project prefix
+  // Separate rituals from regular items, then group remainder by project
+  const rituals = items.filter(b => b.title.toLowerCase().includes('ritual'))
+  const regular = items.filter(b => !b.title.toLowerCase().includes('ritual'))
+
   const map = new Map()
-  for (const item of items) {
+  for (const item of regular) {
     if (!map.has(item.project)) map.set(item.project, [])
     map.get(item.project).push(item)
   }
 
-  const groups = [...map.entries()].map(([name, beads]) => ({
+  const groups = []
+  if (rituals.length) {
+    groups.push({ project: 'Rituals', isRitual: true, beads: rituals.sort((a, b) => a.priority - b.priority) })
+  }
+  groups.push(...[...map.entries()].map(([name, beads]) => ({
     project: name,
     beads: beads.sort((a, b) => a.priority - b.priority),
-  }))
+  })))
 
   return { groups }
 }

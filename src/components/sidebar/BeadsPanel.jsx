@@ -36,7 +36,7 @@ export default function BeadsPanel({ onNewSession, refreshTick, onRefreshDone })
   return (
     <div className="beads-panel">
       {nonEmpty.map(group => (
-        <div key={group.project} className="bead-group">
+        <div key={group.project} className={`bead-group${group.isRitual ? ' bead-group-rituals' : ''}`}>
           <div className="bead-group-header">{group.project}</div>
           {group.beads.map(bead => (
             <BeadItem key={bead.id} bead={bead} onNewSession={onNewSession} onClosed={fetchBeads} />

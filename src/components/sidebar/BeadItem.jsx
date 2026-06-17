@@ -22,7 +22,7 @@ function formatNextRun(nextRunMs) {
   return `${d}d`
 }
 
-const TITLE_LIMIT = 50
+const TITLE_LIMIT = 100
 
 export default function BeadItem({ bead, onNewSession, onClosed }) {
   const [closing, setClosing] = useState(false)

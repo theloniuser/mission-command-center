@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
+const TITLE_LIMIT = 100
 
 function ItemRow({ item, prefix, onPromoted }) {
   const text   = typeof item === 'string' ? item : (item.body || item.text || '')
   const beadId = item.bead_id || null
   const [status, setStatus] = useState(null) // null | 'promoting' | 'ok' | 'error'
+  const [expanded, setExpanded] = useState(false)
+  const needsTrunc = text.length > TITLE_LIMIT
+  const displayText = needsTrunc && !expanded ? text.slice(0, TITLE_LIMIT) + '…' : text
 
   async function promote() {
     if (status === 'promoting') return
@@ -39,7 +43,16 @@ function ItemRow({ item, prefix, onPromoted }) {
     <div className="brain-item">
       <div className="brain-item-body">
         {beadId && <span className="bead-id">{beadId}</span>}
-        <span className="brain-item-text">{text}</span>
+        <span className="brain-item-text">
+          {displayText}
+          {needsTrunc && (
+            <button
+              className="bead-title-toggle"
+              onClick={() => setExpanded(e => !e)}
+              title={expanded ? 'Show less' : 'Show more'}
+            >{expanded ? 'less' : 'more'}</button>
+          )}
+        </span>
       </div>
       <button
         className="brain-item-promote"
@@ -68,8 +81,12 @@ export default function BrainItemsPanel({ refreshTick }) {
     return () => window.removeEventListener('brain-captured', fetchItems)
   }, [])
 
-  const forClaude = data.for_claude || []
-  const toDo      = data.to_do || []
+  const allForClaude = data.for_claude || []
+  const toDo         = data.to_do || []
+
+  const isRitual   = item => (typeof item === 'string' ? item : (item.body || item.text || '')).toLowerCase().includes('ritual')
+  const forClaude  = allForClaude.filter(i => !isRitual(i))
+  const rituals    = allForClaude.filter(isRitual)
 
   return (
     <div className="brain-items-panel">
@@ -91,6 +108,14 @@ export default function BrainItemsPanel({ refreshTick }) {
           : <div className="brain-all-clear">All clear ✓</div>
         }
       </div>
+      {rituals.length > 0 && (
+        <div className="bead-group bead-group-rituals">
+          <div className="bead-group-header">Rituals</div>
+          {rituals.map((item, i) => (
+            <ItemRow key={i} item={item} prefix="For Claude:" onPromoted={fetchItems} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
