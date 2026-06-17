@@ -5,9 +5,10 @@ const TerminalContext = createContext(null)
 export function TerminalProvider({ children }) {
   const [activeTerminalIds, setActiveTerminalIds] = useState(new Set())
   const [activeChangelogId, setActiveChangelogId] = useState(null)
-  const pendingCommandsRef = useRef({})
-  const terminalWritersRef = useRef({})
-  const terminalFocusRef  = useRef({})
+  const pendingCommandsRef  = useRef({})
+  const terminalWritersRef  = useRef({})
+  const terminalFocusRef    = useRef({})
+  const terminalReadersRef  = useRef({})
 
   function openTerminal(id) {
     setActiveTerminalIds(prev => {
@@ -58,6 +59,18 @@ export function TerminalProvider({ children }) {
     delete terminalFocusRef.current[id]
   }
 
+  function registerTerminalReader(id, readFn) {
+    terminalReadersRef.current[id] = readFn
+  }
+
+  function unregisterTerminalReader(id) {
+    delete terminalReadersRef.current[id]
+  }
+
+  function getTerminalContent(id) {
+    return terminalReadersRef.current[id]?.() ?? ''
+  }
+
   function openChangelog(id) {
     setActiveChangelogId(prev => (prev === id ? null : id))
   }
@@ -67,6 +80,7 @@ export function TerminalProvider({ children }) {
       activeTerminalIds, openTerminal, closeTerminal,
       sendCommand, consumePendingCommand, registerTerminal, unregisterTerminal,
       registerTerminalFocus, unregisterTerminalFocus,
+      registerTerminalReader, unregisterTerminalReader, getTerminalContent,
       activeChangelogId, openChangelog,
     }}>
       {children}

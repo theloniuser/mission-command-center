@@ -40,10 +40,59 @@ export default function ProjectTile({ project }) {
   const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
   const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
 
-  const { activeTerminalIds, openTerminal, closeTerminal, sendCommand, activeChangelogId, openChangelog } = useTerminal()
+  const { activeTerminalIds, openTerminal, closeTerminal, sendCommand, getTerminalContent, activeChangelogId, openChangelog } = useTerminal()
   const isExpanded = activeTerminalIds.has(project.id)
   const showChangelog = activeChangelogId === project.id
   const changelogRef = useRef(null)
+
+  // compact: idle → confirm → idle
+  const [confirmCompact, setConfirmCompact] = useState(false)
+  const compactTimer = useRef(null)
+
+  function handleCompactClick() {
+    if (confirmCompact) {
+      sendCommand(project.id, '/compact')
+      setConfirmCompact(false)
+      clearTimeout(compactTimer.current)
+    } else {
+      setConfirmCompact(true)
+      clearTimeout(compactTimer.current)
+      compactTimer.current = setTimeout(() => setConfirmCompact(false), 3000)
+    }
+  }
+
+  // handoff: idle → confirm → copy → copied → idle
+  const [handoffPhase, setHandoffPhase] = useState('idle') // idle | confirm | copy | copied
+  const handoffTimer = useRef(null)
+
+  function handleHandoffClick() {
+    if (handoffPhase === 'idle') {
+      setHandoffPhase('confirm')
+      clearTimeout(handoffTimer.current)
+      handoffTimer.current = setTimeout(() => setHandoffPhase('idle'), 3000)
+    } else if (handoffPhase === 'confirm') {
+      sendCommand(project.id, '/session-handoff')
+      setHandoffPhase('copy')
+      clearTimeout(handoffTimer.current)
+    } else if (handoffPhase === 'copy' || handoffPhase === 'copied') {
+      const text = getTerminalContent(project.id)
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          setHandoffPhase('copied')
+          handoffTimer.current = setTimeout(() => setHandoffPhase('idle'), 2000)
+        })
+      } else {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.style.cssText = 'position:fixed;top:-9999px'
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta)
+        setHandoffPhase('copied')
+        handoffTimer.current = setTimeout(() => setHandoffPhase('idle'), 2000)
+      }
+    }
+  }
+
+  useEffect(() => () => { clearTimeout(compactTimer.current); clearTimeout(handoffTimer.current) }, [])
 
   useEffect(() => {
     if (showChangelog && changelogRef.current) {
@@ -106,8 +155,15 @@ export default function ProjectTile({ project }) {
           <span className="tsb-divider" />
           <span className="tsb-item">{tokens > 0 ? `${tokens.toLocaleString()} tokens` : '—'}</span>
           <span className="tsb-divider" />
-          <span className="tsb-cmd-btn" role="button" onClick={() => sendCommand(project.id, '/compact')}>/compact</span>
-          <span className="tsb-cmd-btn" role="button" onClick={() => sendCommand(project.id, '/session-handoff')}>/handoff</span>
+          <span className={`tsb-cmd-btn${confirmCompact ? ' tsb-cmd-btn--confirm' : ''}`} role="button" onClick={handleCompactClick}>
+            {confirmCompact ? 'confirm?' : '/compact'}
+          </span>
+          <span className={`tsb-cmd-btn${handoffPhase !== 'idle' ? ' tsb-cmd-btn--confirm' : ''}`} role="button" onClick={handleHandoffClick}>
+            {handoffPhase === 'idle'    && '/handoff'}
+            {handoffPhase === 'confirm' && 'confirm?'}
+            {handoffPhase === 'copy'    && 'copy handoff'}
+            {handoffPhase === 'copied'  && '✓ copied'}
+          </span>
           <button className="tsb-close" onClick={() => closeTerminal(project.id)} aria-label="Close terminal">✕</button>
         </div>
       </article>

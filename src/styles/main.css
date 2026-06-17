@@ -634,6 +634,12 @@ html:not([data-theme="dark"]) .tsb-cmd-btn:hover {
   background: rgba(255,107,0,0.06);
 }
 
+.tsb-cmd-btn--confirm {
+  color: var(--color-orange-ui) !important;
+  border-color: var(--color-orange-ui) !important;
+  background: rgba(255,107,0,0.12) !important;
+}
+
 .tsb-close {
   margin-left: auto;
   background: none;

@@ -12,6 +12,10 @@ const DARK_THEME = {
   selectionBackground: 'rgba(255,107,0,0.3)',
   red: '#ff6b00',
   brightRed: '#ff8c38',
+  blue: '#339fd9',
+  brightBlue: '#5bb8e8',
+  cyan: '#339fd9',
+  brightCyan: '#5bb8e8',
 }
 
 const LIGHT_THEME = {
@@ -21,13 +25,17 @@ const LIGHT_THEME = {
   selectionBackground: 'rgba(255,107,0,0.2)',
   red: '#e05a00',
   brightRed: '#ff6b00',
+  blue: '#267bb4',
+  brightBlue: '#339fd9',
+  cyan: '#267bb4',
+  brightCyan: '#339fd9',
 }
 
 export default function TerminalPane({ projectPath, projectId }) {
   const containerRef = useRef(null)
   const termRef = useRef(null)
   const { theme } = useTheme()
-  const { consumePendingCommand, registerTerminal, unregisterTerminal, registerTerminalFocus, unregisterTerminalFocus } = useTerminal()
+  const { consumePendingCommand, registerTerminal, unregisterTerminal, registerTerminalFocus, unregisterTerminalFocus, registerTerminalReader, unregisterTerminalReader } = useTerminal()
 
   useEffect(() => {
     if (termRef.current) {
@@ -64,6 +72,16 @@ export default function TerminalPane({ projectPath, projectId }) {
         }
       })
       registerTerminalFocus(projectId, () => term.focus())
+      // eslint-disable-next-line no-control-regex
+      const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][AB012]/g
+      registerTerminalReader(projectId, () => {
+        const buf = term.buffer.active
+        const lines = []
+        for (let i = 0; i < buf.length; i++) {
+          lines.push(buf.getLine(i)?.translateToString(true) ?? '')
+        }
+        return lines.join('\n').replace(ANSI_RE, '').trimEnd()
+      })
 
       const pending = consumePendingCommand(projectId)
       if (pending) {
@@ -98,6 +116,7 @@ export default function TerminalPane({ projectPath, projectId }) {
     return () => {
       unregisterTerminal(projectId)
       unregisterTerminalFocus(projectId)
+      unregisterTerminalReader(projectId)
       ro.disconnect()
       ws.close()
       term.dispose()
