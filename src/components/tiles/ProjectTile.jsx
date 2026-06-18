@@ -182,16 +182,14 @@ export default function ProjectTile({ project }) {
         <div className="tile-header">
           <h2 className="tile-project-name">{project.name}</h2>
           <div className="tile-header-actions">
-            {isLocal && (
-              <button
-                className="tile-terminal-btn"
-                onClick={() => openTerminal(project.id)}
-                aria-label="Open terminal"
-                title={`Open terminal in ${project.name}`}
-              >
-                &gt;_
-              </button>
-            )}
+            <button
+              className="tile-terminal-btn"
+              onClick={() => openTerminal(project.id)}
+              aria-label="Open terminal"
+              title={`Open terminal in ${project.name}`}
+            >
+              &gt;_
+            </button>
             <span className={`tile-status-badge status-${status.replace(' ', '-')}`}>
               {status}
             </span>
