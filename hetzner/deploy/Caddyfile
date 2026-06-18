@@ -1,0 +1,62 @@
+(tls_cloudflare) {
+    tls {
+        dns cloudflare {env.CF_API_TOKEN}
+    }
+}
+
+tools.arcdevstudio.com {
+    import tls_cloudflare
+    handle /brand/* {
+        uri strip_prefix /brand
+        root * /brand-assets
+        file_server
+    }
+    reverse_proxy app:8000
+}
+
+content.arcdevstudio.com {
+    import tls_cloudflare
+    reverse_proxy arcos-content-pipeline:8000
+}
+
+hub.arcdevstudio.com {
+    import tls_cloudflare
+    handle /api/* {
+        reverse_proxy 172.18.0.1:4747
+    }
+    handle /ads-command-center/* {
+        root * /hub
+        try_files {path} /ads-command-center/index.html
+        file_server
+    }
+    handle /terminal {
+        reverse_proxy pty-server:3002
+    }
+    handle {
+        root * /hub
+        file_server
+    }
+}
+
+brand.arcdesignstudio.com {
+    import tls_cloudflare
+    root * /ads-brand
+    file_server
+}
+
+brwiki.arcdesignstudio.com {
+    import tls_cloudflare
+    root * /br-wiki
+    file_server
+}
+
+survey.arcdesignstudio.com {
+    import tls_cloudflare
+    handle /api/* {
+        reverse_proxy 172.18.0.1:4747
+    }
+    handle {
+        root * /survey
+        file_server
+    }
+}

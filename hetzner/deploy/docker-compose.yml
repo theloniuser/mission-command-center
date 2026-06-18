@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    expose:
+      - "8000"
+    volumes:
+      - ./static:/app/static:ro
+
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - /home/jimc/brand-assets:/brand-assets:ro
+      - /home/jimc/hub:/hub:ro
+      - /home/jimc/ads-brand:/ads-brand:ro
+      - /br-wiki:/br-wiki:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  pty-server:
+    build: /home/jimc/pty-server
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
