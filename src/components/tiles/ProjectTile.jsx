@@ -24,10 +24,6 @@ function gaugeColor(pct) {
   return GAUGE_COLORS.healthy
 }
 
-const host = window.location.hostname
-const isLocal = host === 'localhost' || host === '127.0.0.1' ||
-  host.startsWith('10.') || host.startsWith('192.168.') || host.startsWith('172.')
-
 export default function ProjectTile({ project }) {
   const tokens = project.token_count ?? 0
   const pct = Math.min(tokens / THRESHOLD_150K, 1)
@@ -143,7 +139,7 @@ export default function ProjectTile({ project }) {
     play(e.target.value)
   }
 
-  if (isExpanded && isLocal) {
+  if (isExpanded) {
     return (
       <article className="project-tile project-tile--expanded">
         <div className="tile-color-bar" style={{ background: project.color }} />
