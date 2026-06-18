@@ -3,6 +3,7 @@ import { WebSocketServer } from 'ws'
 import pty from 'node-pty'
 
 const PORT = process.env.PORT || 3002
+// No auth by design — personal hub only (hub.arcdevstudio.com, Cloudflare TLS gate)
 
 const server = http.createServer((req, res) => {
   res.writeHead(200)
