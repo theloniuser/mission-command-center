@@ -3,3 +3,9 @@ dist/
 config/*.json
 config/notes.md
 hetzner/
+changes.*.md
+_build_plan/
+AGENTS.md
+.env.production
+.env.local
+.env*.local
