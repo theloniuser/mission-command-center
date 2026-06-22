@@ -31,7 +31,7 @@ Command Center is free and open source. Start with Starter — add integrations 
 ## Starter — zero config, works immediately
 
 ```bash
-git clone https://github.com/theloniuser/mission-command-center
+git clone https://github.com/theloniuser/mission-command-center.git
 cd mission-command-center
 npm install
 
