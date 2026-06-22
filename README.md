@@ -2,8 +2,6 @@
 
 A local dashboard for Claude Code power users. See all your projects, launch terminal sessions, and manage your AI coding workflow — all from one browser tab.
 
-![Command Center](hub-cc.png)
-
 ---
 
 ## Tiers
