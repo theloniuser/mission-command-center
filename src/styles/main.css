@@ -508,6 +508,15 @@ html[data-theme="dark"]  .site-texture { opacity: 0.12; }
   border-top: none;
 }
 
+.terminal-pane-minimized {
+  min-height: 0;
+  flex: none;
+}
+
+.terminal-pane-minimized .terminal-container {
+  display: none;
+}
+
 .terminal-pane-header {
   display: flex;
   align-items: center;
@@ -675,6 +684,37 @@ html:not([data-theme="dark"]) .tsb-cmd-btn:hover {
   color: var(--color-orange-ui) !important;
   border-color: var(--color-orange-ui) !important;
   background: rgba(255,107,0,0.12) !important;
+}
+
+.tsb-minimize {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 4px;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.tsb-minimize:hover {
+  color: rgba(255,255,255,0.85);
+}
+
+html:not([data-theme="dark"]) .tsb-minimize {
+  color: rgba(0,0,0,0.35);
+}
+
+html:not([data-theme="dark"]) .tsb-minimize:hover {
+  color: rgba(0,0,0,0.75);
+}
+
+.tile-status-bar--minimized {
+  opacity: 0.6;
+}
+
+.tile-status-bar--minimized:hover {
+  opacity: 1;
 }
 
 .tsb-close {

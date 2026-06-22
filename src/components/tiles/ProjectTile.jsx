@@ -24,7 +24,7 @@ function gaugeColor(pct) {
   return GAUGE_COLORS.healthy
 }
 
-function PaneStatusBar({ terminalId, project, onAddPane, onClose }) {
+function PaneStatusBar({ terminalId, project, onAddPane, onClose, isMinimized, onToggleMinimize }) {
   const { sendCommand, getTerminalContent } = useTerminal()
   const tokens = project.token_count ?? 0
   const status = project.status ?? 'no session'
@@ -77,7 +77,7 @@ function PaneStatusBar({ terminalId, project, onAddPane, onClose }) {
   }
 
   return (
-    <div className="tile-status-bar">
+    <div className={`tile-status-bar${isMinimized ? ' tile-status-bar--minimized' : ''}`}>
       <span className="tsb-name">{project.name}</span>
       <span className="tsb-divider" />
       <span className={`tsb-badge status-${status.replace(' ', '-')}`}>{status}</span>
@@ -98,6 +98,9 @@ function PaneStatusBar({ terminalId, project, onAddPane, onClose }) {
         {handoffPhase === 'copied'  && '✓ copied'}
       </span>
       <span className="tsb-cmd-btn" role="button" onClick={onAddPane} title="Add a new session pane">+session</span>
+      <button className="tsb-minimize" onClick={onToggleMinimize} title={isMinimized ? 'Restore session' : 'Minimize session'} aria-label={isMinimized ? 'Restore session' : 'Minimize session'}>
+        {isMinimized ? '▲' : '—'}
+      </button>
       <button className="tsb-close" onClick={onClose} aria-label="Close session">✕</button>
     </div>
   )
@@ -122,6 +125,16 @@ export default function ProjectTile({ project }) {
   const { getTerminalIds, openTerminal, addTerminalPane, closeTerminalPane, sendCommand, activeChangelogId, openChangelog } = useTerminal()
   const terminalIds = getTerminalIds(project.id)
   const isExpanded = terminalIds.length > 0
+  const [minimizedPanes, setMinimizedPanes] = useState(new Set())
+
+  function toggleMinimize(terminalId) {
+    setMinimizedPanes(prev => {
+      const next = new Set(prev)
+      if (next.has(terminalId)) next.delete(terminalId)
+      else next.add(terminalId)
+      return next
+    })
+  }
   const showChangelog = activeChangelogId === project.id
   const changelogRef = useRef(null)
 
@@ -174,17 +187,22 @@ export default function ProjectTile({ project }) {
     return (
       <article className="project-tile project-tile--expanded">
         <div className="tile-color-bar" style={{ background: project.color }} />
-        {terminalIds.map((terminalId) => (
-          <div key={terminalId} className="terminal-pane-wrapper">
-            <TerminalPane projectPath={project.path} projectId={project.id} terminalId={terminalId} />
-            <PaneStatusBar
-              terminalId={terminalId}
-              project={project}
-              onAddPane={() => addTerminalPane(project.id)}
-              onClose={() => closeTerminalPane(terminalId)}
-            />
-          </div>
-        ))}
+        {terminalIds.map((terminalId) => {
+          const minimized = minimizedPanes.has(terminalId)
+          return (
+            <div key={terminalId} className={`terminal-pane-wrapper${minimized ? ' terminal-pane-minimized' : ''}`}>
+              <TerminalPane projectPath={project.path} projectId={project.id} terminalId={terminalId} />
+              <PaneStatusBar
+                terminalId={terminalId}
+                project={project}
+                onAddPane={() => addTerminalPane(project.id)}
+                onClose={() => closeTerminalPane(terminalId)}
+                isMinimized={minimized}
+                onToggleMinimize={() => toggleMinimize(terminalId)}
+              />
+            </div>
+          )
+        })}
       </article>
     )
   }
