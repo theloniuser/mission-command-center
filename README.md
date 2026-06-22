@@ -1,6 +1,6 @@
 # Command Center
 
-A local dashboard for Claude Code power users. See all your projects, launch terminal sessions, and manage your AI coding workflow — all from one browser tab.
+A local dashboard for Claude Code, Codex, and other AI coding assistants. See all your projects, launch terminal sessions, and manage your AI coding workflow — all from one browser tab.
 
 ---
 
