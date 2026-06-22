@@ -467,13 +467,13 @@ app.put('/api/settings', (req, res) => {
 const distPath = resolve(_serverDir, '../dist')
 
 if (existsSync(distPath)) {
-  app.use('/mission-command-center', express.static(distPath))
-  app.get('/mission-command-center/*', (req, res) => {
+  app.use('/ads-command-center', express.static(distPath))
+  app.get('/ads-command-center/*', (req, res) => {
     const idx = resolve(distPath, 'index.html')
     if (existsSync(idx)) res.sendFile(idx)
     else res.status(404).end()
   })
-  app.get('/', (req, res) => res.redirect('/mission-command-center/'))
+  app.get('/', (req, res) => res.redirect('/ads-command-center/'))
 }
 
 // ── WebSocket + PTY ───────────────────────────────────────
@@ -523,5 +523,5 @@ wss.on('connection', (ws) => {
 // ── Start ─────────────────────────────────────────────────
 
 server.listen(PORT, () => {
-  console.log(`Mission Command Center running at http://localhost:${PORT}`)
+  console.log(`ADS Command Center running at http://localhost:${PORT}`)
 })

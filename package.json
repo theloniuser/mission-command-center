@@ -1,5 +1,5 @@
 {
-  "name": "mission-command-center",
+  "name": "ads-command-center",
   "version": "1.0.0",
   "description": "Local dashboard for Claude Code power users — monitor sessions, manage tasks, and launch terminals from one browser tab",
   "type": "module",

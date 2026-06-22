@@ -3,10 +3,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/mission-command-center/',
+  base: '/ads-command-center/',
   server: {
     port: 5173,
-    open: '/mission-command-center/',
+    open: '/ads-command-center/',
     proxy: {
       '/api': {
         target: 'http://localhost:3001',

@@ -2,17 +2,18 @@ import { createContext, useContext, useEffect, useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-const DEFAULT_TITLE = 'Mission Command Center'
+const DEFAULT_TITLE = 'ADS Command Center'
 
 const BrandContext = createContext({ brandMode: 'Generic', brandConfig: {}, title: DEFAULT_TITLE, applyBrand: () => {}, applyTitle: () => {} })
 
 function getLinkHref(config) {
+  const base = import.meta.env.BASE_URL || '/'
   const mode = config?.theme_mode || 'Generic'
-  if (mode === 'Generic') return '/generic-tokens.css'
+  if (mode === 'Generic') return `${base}generic-tokens.css`
   if (mode === 'Custom' && config?.token_css_path) {
     return `/api/brand-css?path=${encodeURIComponent(config.token_css_path)}`
   }
-  return '/ads-tokens.css'
+  return `${base}ads-tokens.css`
 }
 
 function swapTokenLink(href) {
