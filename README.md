@@ -128,7 +128,7 @@ Leave blank to disable. The sidebar shows "All clear âœ“" when no path is set â€
 |------|-------------|
 | Generic | Built-in neutral slate/indigo theme (default) |
 | Custom | Point to your own CSS token file (absolute path) and optional logo |
-| ADS | Arc Design Studio brand (requires ADS font files) |
+
 
 ---
 
