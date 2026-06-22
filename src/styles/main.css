@@ -687,6 +687,7 @@ html:not([data-theme="dark"]) .tsb-cmd-btn:hover {
 }
 
 .tsb-minimize {
+  margin-left: auto;
   background: none;
   border: none;
   color: rgba(255,255,255,0.4);
@@ -694,7 +695,6 @@ html:not([data-theme="dark"]) .tsb-cmd-btn:hover {
   font-size: 13px;
   padding: 0 4px;
   line-height: 1;
-  margin-left: 2px;
 }
 
 .tsb-minimize:hover {
@@ -718,7 +718,6 @@ html:not([data-theme="dark"]) .tsb-minimize:hover {
 }
 
 .tsb-close {
-  margin-left: auto;
   background: none;
   border: none;
   color: rgba(255,255,255,0.4);
