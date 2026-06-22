@@ -6,6 +6,7 @@ export default defineConfig({
   base: '/mission-command-center/',
   server: {
     port: 5173,
+    open: '/mission-command-center/',
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
