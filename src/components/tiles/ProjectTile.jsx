@@ -99,7 +99,7 @@ function PaneStatusBar({ terminalId, project, onAddPane, onClose, isMinimized, o
       </span>
       <span className="tsb-cmd-btn" role="button" onClick={onAddPane} title="Add a new session pane">+session</span>
       <button className="tsb-minimize" onClick={onToggleMinimize} title={isMinimized ? 'Restore session' : 'Minimize session'} aria-label={isMinimized ? 'Restore session' : 'Minimize session'}>
-        {isMinimized ? '∨' : '∧'}
+        <span className="tsb-chevron">{isMinimized ? '∨' : '∧'}</span>
       </button>
       <button className="tsb-close" onClick={onClose} aria-label="Close session">✕</button>
     </div>

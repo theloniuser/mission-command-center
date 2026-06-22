@@ -373,7 +373,7 @@ html[data-theme="dark"]  .site-texture { opacity: 0.12; }
   white-space: nowrap;
 }
 
-.tile-status-badge.status-active { color: var(--color-blue); }
+.tile-status-badge.status-active { color: var(--color-orange-ui); }
 .tile-status-badge.status-idle   { color: var(--hub-text-fade); }
 .tile-status-badge.status-closed { color: var(--hub-text-fade); opacity: 0.5; }
 
@@ -636,7 +636,7 @@ html:not([data-theme="dark"]) .tsb-minimize:hover {
   background: rgba(255,255,255,0.08);
 }
 
-.tsb-badge.status-active { color: var(--color-blue); }
+.tsb-badge.status-active { color: var(--color-orange-ui); }
 .tsb-badge.status-idle   { color: rgba(255,255,255,0.4); }
 
 .tsb-divider {
@@ -685,6 +685,14 @@ html:not([data-theme="dark"]) .tsb-cmd-btn:hover {
   color: var(--color-orange-ui) !important;
   border-color: var(--color-orange-ui) !important;
   background: rgba(255,107,0,0.12) !important;
+}
+
+.tsb-chevron {
+  display: inline-block;
+  font-size: 1.1rem;
+  line-height: 1;
+  transform: scaleY(0.5);
+  transform-origin: center;
 }
 
 .tsb-minimize {
