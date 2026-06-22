@@ -83,6 +83,8 @@ macOS GUI: `brew tap beadbox/cask && brew install --cask beadbox`
 
 Brain adds two things: **thought capture** (send a note to any remote API from the sidebar) and **brain backlog** (a live "For Claude / To Do" feed from your external brain system).
 
+The thought capture endpoint shape is compatible with [Open Brain (OB1)](https://github.com/NateBJones-Projects/OB1) by Nate B. Jones — a self-hosted personal knowledge infrastructure built on Supabase. If you're looking for a brain backend, that's the one to start with.
+
 ### Thought capture
 
 By default, captures go to `config/notes.md` (local). To send to a remote endpoint instead, configure it in **Settings → Custom Action**:
