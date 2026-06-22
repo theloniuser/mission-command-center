@@ -161,7 +161,6 @@ export default function SettingsForm({ settings, onSaved }) {
             onChange={handleBrand}
           >
             <option value="Generic">Generic (default)</option>
-            <option value="ADS">ADS</option>
             <option value="Custom">Custom</option>
           </select>
         </div>

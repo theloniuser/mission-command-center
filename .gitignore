@@ -9,3 +9,7 @@ AGENTS.md
 .env.production
 .env.local
 .env*.local
+public/ADS-logo-primary.svg
+public/ADS-logo-primary-orange-white-text.svg
+public/ads-tokens.css
+public/CLAUDE.md
