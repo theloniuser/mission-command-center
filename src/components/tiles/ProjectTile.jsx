@@ -35,7 +35,10 @@ function PaneStatusBar({ terminalId, project, onAddPane, onClose, isMinimized, o
   const [handoffPhase, setHandoffPhase] = useState('idle')
   const handoffTimer = useRef(null)
 
-  useEffect(() => () => { clearTimeout(compactTimer.current); clearTimeout(handoffTimer.current) }, [])
+  const [confirmClose, setConfirmClose] = useState(false)
+  const closeTimer = useRef(null)
+
+  useEffect(() => () => { clearTimeout(compactTimer.current); clearTimeout(handoffTimer.current); clearTimeout(closeTimer.current) }, [])
 
   function handleCompactClick() {
     if (confirmCompact) {
@@ -101,7 +104,22 @@ function PaneStatusBar({ terminalId, project, onAddPane, onClose, isMinimized, o
       <button className="tsb-minimize" onClick={onToggleMinimize} title={isMinimized ? 'Restore session' : 'Minimize session'} aria-label={isMinimized ? 'Restore session' : 'Minimize session'}>
         <span className="tsb-chevron">{isMinimized ? '∨' : '∧'}</span>
       </button>
-      <button className="tsb-close" onClick={onClose} aria-label="Close session">✕</button>
+      <button
+        className={`tsb-close${confirmClose ? ' tsb-cmd-btn--confirm' : ''}`}
+        onClick={() => {
+          if (confirmClose) {
+            clearTimeout(closeTimer.current)
+            onClose()
+          } else {
+            setConfirmClose(true)
+            clearTimeout(closeTimer.current)
+            closeTimer.current = setTimeout(() => setConfirmClose(false), 3000)
+          }
+        }}
+        aria-label="Close session"
+      >
+        {confirmClose ? 'close?' : '✕'}
+      </button>
     </div>
   )
 }
