@@ -1,7 +1,7 @@
 {
-  "name": "ads-command-center",
+  "name": "mission-command-center",
   "version": "1.0.0",
-  "description": "ADS local operations dashboard for managing Claude Code and Codex sessions",
+  "description": "Local dashboard for Claude Code power users — monitor sessions, manage tasks, and launch terminals from one browser tab",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"vite\"",

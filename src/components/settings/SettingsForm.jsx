@@ -7,7 +7,7 @@ export default function SettingsForm({ settings, onSaved }) {
   const [form, setForm] = useState(settings)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const { applyBrand } = useBrand()
+  const { applyBrand, applyTitle } = useBrand()
 
   function handleAlerts(e) {
     const val = e.target.type === 'number' ? Number(e.target.value) : e.target.value
@@ -35,6 +35,7 @@ export default function SettingsForm({ settings, onSaved }) {
         body: JSON.stringify(form),
       })
       applyBrand(form.brand)
+      applyTitle(form.title)
       setSaved(true)
       onSaved(form)
     } finally {
@@ -44,6 +45,21 @@ export default function SettingsForm({ settings, onSaved }) {
 
   return (
     <form onSubmit={handleSubmit}>
+      {/* Dashboard title */}
+      <section className="settings-section">
+        <h2 className="settings-section-title">Dashboard</h2>
+        <div className="form-group">
+          <label>Title</label>
+          <input
+            className="form-input"
+            name="title"
+            value={form.title || ''}
+            onChange={e => { setForm(f => ({ ...f, title: e.target.value })); setSaved(false) }}
+            placeholder="Mission Command Center"
+          />
+        </div>
+      </section>
+
       {/* Alert thresholds */}
       <section className="settings-section">
         <h2 className="settings-section-title">Alert Thresholds</h2>
@@ -144,8 +160,8 @@ export default function SettingsForm({ settings, onSaved }) {
             value={form.brand.theme_mode}
             onChange={handleBrand}
           >
-            <option value="ADS">ADS (default)</option>
-            <option value="Generic">Generic</option>
+            <option value="Generic">Generic (default)</option>
+            <option value="ADS">ADS</option>
             <option value="Custom">Custom</option>
           </select>
         </div>

@@ -10,6 +10,7 @@ const DEFAULTS = {
   'tasks.json': [],
   'temp-projects.json': [],
   'settings.json': {
+    title: '',
     alerts: {
       compact_threshold: 80000,
       handoff_threshold: 120000,

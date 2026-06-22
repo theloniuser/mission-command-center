@@ -46,8 +46,8 @@ node --version    # must be 18 or higher
 git --version     # must be present
 
 # 2. Clone and install
-git clone https://github.com/theloniuser/ads-command-center
-cd ads-command-center
+git clone https://github.com/theloniuser/mission-command-center
+cd mission-command-center
 npm install
 
 # 3. Copy config templates
@@ -58,7 +58,7 @@ cp config/projects.json.example config/projects.json
 npm run dev
 ```
 
-Open `http://localhost:5173/ads-command-center/` — the dashboard should load.
+Open `http://localhost:5173/mission-command-center/` — the dashboard should load.
 If the page is blank or errors, check the terminal for server errors before continuing.
 
 ---
@@ -213,7 +213,7 @@ It does not need to be a git repo.
 
 Walk through these after setup:
 
-- [ ] Dashboard loads at `http://localhost:5173/ads-command-center/`
+- [ ] Dashboard loads at `http://localhost:5173/mission-command-center/`
 - [ ] At least one project tile appears
 - [ ] Opening a new Claude Code session in that project's directory causes the tile to show "active" within ~10 seconds
 - [ ] Typing in the sidebar capture box and pressing Enter saves without error
@@ -256,9 +256,9 @@ Walk through these after setup:
 
 Once the checklist passes:
 
-> "Command Center is running. Open http://localhost:5173/ads-command-center/ and keep
+> "Command Center is running. Open http://localhost:5173/mission-command-center/ and keep
 > it in a browser tab while you work. It will track your active sessions automatically.
-> To start it again next time: run `npm run dev` from the `ads-command-center/` directory."
+> To start it again next time: run `npm run dev` from the `mission-command-center/` directory."
 
 If they want it to start automatically on login, suggest adding `npm run dev` to a
 startup script or launchd plist (macOS) / systemd service (Linux) / Task Scheduler (Windows).
@@ -273,3 +273,8 @@ startup script or launchd plist (macOS) / systemd service (Linux) / Task Schedul
 - If the user asks "what is Open Brain / Beads / etc.", explain it is an optional
   integration and the tool works without it; ask if they want to set it up or use local mode
 - Restart the dev server (`Ctrl+C` then `npm run dev`) after any changes to `config/settings.json`
+
+
+<claude-mem-context>
+
+</claude-mem-context>

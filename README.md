@@ -1,51 +1,69 @@
 # Command Center
 
-A local dashboard for Claude Code power users. Monitor active sessions, manage your project backlog, capture thoughts, and launch new sessions — all from one browser tab.
+A local dashboard for Claude Code power users. See all your projects, launch terminal sessions, and manage your AI coding workflow — all from one browser tab.
 
-## What it does
+![Command Center](hub-cc.png)
 
-- **Project tiles** — see all your projects at a glance with live session status (active / idle / closed)
-- **Task backlog** — built-in local task list, or connect [Beads](https://github.com/theloniuser/beads) if you use it
-- **Thought capture** — capture notes to a local file, or wire up any POST endpoint (Open Brain, Notion, etc.)
-- **Changelog feed** — per-project changelog viewer for `changes.YYYY-MM-DD.HH-MM.md` files
-- **Terminal emulator** — launch Claude or any command directly from a project tile
-- **Brand theming** — ships with a Generic theme; swap in your own CSS design tokens
+---
+
+## Tiers
+
+Command Center is free and open source. Start with Starter — add integrations as you need them.
+
+| Feature | Starter | Standard | Pro |
+|---------|:-------:|:--------:|:---:|
+| Project tiles with live session status | ✓ | ✓ | ✓ |
+| In-browser terminal (multi-pane) | ✓ | ✓ | ✓ |
+| Changelog feed (`changes.*.md` viewer) | ✓ | ✓ | ✓ |
+| Local task list | ✓ | ✓ | ✓ |
+| Brand theming (Generic / Custom) | ✓ | ✓ | ✓ |
+| [Beads](https://github.com/gastownhall/beads) backlog integration | | ✓ | ✓ |
+| Brain capture (remote API) | | | ✓ |
+| Brain backlog feed (For Claude / To Do) | | | ✓ |
+
+---
 
 ## Prerequisites
 
 - Node.js 18+
 - npm
 
-## Setup
+---
+
+## Starter — zero config, works immediately
 
 ```bash
-git clone https://github.com/theloniuser/ads-command-center
-cd ads-command-center
+git clone https://github.com/theloniuser/mission-command-center
+cd mission-command-center
 npm install
 
 cp config/settings.json.example config/settings.json
 cp config/projects.json.example config/projects.json
-```
 
-Start the dev server:
-
-```bash
 npm run dev
 ```
 
-Open `http://localhost:5173/ads-command-center/` in your browser.
+Open `http://localhost:5173/mission-command-center/` — the dashboard loads.
+
+Go to **Settings → Projects**, add a project with its local path, and you're running.
+
+---
 
 ## Adding projects
 
-Go to **Settings → Projects** and add each project with its local path. The path is used to scan for active Claude sessions and changelog files.
+**Settings → Projects → Add project.** Each project needs:
 
-## Optional integrations
+- **Name** — display label on the tile
+- **Path** — absolute path to the project directory on disk
+- **Launch command** (optional) — defaults to `claude`; can be `codex`, `cursor`, etc.
 
-### Task backlog
+The path is used to detect active Claude Code sessions and scan for changelog files.
 
-Command Center ships with a built-in local task list (stored in `config/tasks.json`). Zero config, works everywhere.
+---
 
-For a more powerful backlog, install **[Beads](https://github.com/gastownhall/beads)** — a dependency-aware, git-backed issue tracker built for AI coding agents. Works on macOS, Linux, Windows, and FreeBSD.
+## Standard — add Beads
+
+[Beads](https://github.com/gastownhall/beads) is a dependency-aware, git-backed issue tracker built for AI coding agents. Works on macOS, Linux, Windows, and FreeBSD.
 
 ```bash
 # Install
@@ -55,20 +73,52 @@ curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/inst
 cd your-project && bd init && bd setup claude   # or: bd setup codex
 ```
 
-If `bd` is found at server startup, Command Center uses it automatically. If not, it falls back to local tasks — no config change needed.
+If `bd` is found when Command Center starts, it uses Beads automatically. If not, it falls back to the local task list — no config change needed.
+
+macOS GUI: `brew tap beadbox/cask && brew install --cask beadbox`
+
+---
+
+## Pro — add Brain
+
+Brain adds two things: **thought capture** (send a note to any remote API from the sidebar) and **brain backlog** (a live "For Claude / To Do" feed from your external brain system).
 
 ### Thought capture
 
-By default, captured thoughts are appended to `config/notes.md`.
+By default, captures go to `config/notes.md` (local). To send to a remote endpoint instead, configure it in **Settings → Custom Action**:
 
-To send captures to a remote API instead, configure the endpoint in **Settings → Custom Action**:
+```json
+"customAction": {
+  "name": "Capture to Brain",
+  "endpoint_url": "https://your-endpoint/capture",
+  "api_key_env_var": "MY_API_KEY"
+}
+```
 
-- **Endpoint URL** — any POST endpoint that accepts `{ "text": "..." }` with an `x-api-key` header
-- **API key env var** — the name of the environment variable holding your key (e.g. `CAPTURE_API_KEY`). The value is read from your shell environment — never stored in config.
+`api_key_env_var` is the name of an env var, not the key itself. Set the value in your shell profile:
 
-### Brain backlog (Open Brain / custom)
+```bash
+export MY_API_KEY="your-actual-key-here"
+```
 
-If you have a brain system that produces a `backlog.json` file (with `{ "brain": { "for_claude": [], "to_do": [] } }` shape), set the absolute path in **Settings → Backlog path**. Leave blank to disable.
+Command Center POSTs `{ "text": "..." }` with an `x-api-key` header. Works with any endpoint — Open Brain, Notion wrapper, n8n webhook, Webhook.site, or custom.
+
+### Brain backlog feed
+
+If your brain system produces a `backlog.json` file, set its absolute path in **Settings → Backlog path**:
+
+```json
+{
+  "brain": {
+    "for_claude": ["item text", "..."],
+    "to_do": ["item text", "..."]
+  }
+}
+```
+
+Leave blank to disable. The sidebar shows "All clear ✓" when no path is set — that's expected.
+
+---
 
 ## Brand theming
 
@@ -77,24 +127,40 @@ If you have a brain system that produces a `backlog.json` file (with `{ "brain":
 | Mode | Description |
 |------|-------------|
 | Generic | Built-in neutral slate/indigo theme (default) |
-| ADS | Arc Design Studio brand tokens |
-| Custom | Point to your own CSS token file and logo |
+| Custom | Point to your own CSS token file (absolute path) and optional logo |
+| ADS | Arc Design Studio brand (requires ADS font files) |
 
-Custom mode accepts an absolute path to any `.css` file that defines CSS custom properties.
+---
 
 ## Config files
 
-`config/` is gitignored. Your personal config (projects, settings) stays local. The `.example` files show the expected shape.
+`config/` is gitignored — your settings stay local.
 
 | File | Purpose |
 |------|---------|
+| `config/settings.json` | All settings (brand, custom action, backlog path) |
 | `config/projects.json` | Your project list |
-| `config/settings.json` | Alerts, custom action, brand, backlog path |
 | `config/tasks.json` | Local task list (auto-created) |
-| `config/notes.md` | Local brain capture log (auto-created) |
+| `config/notes.md` | Local capture log (auto-created) |
+
+---
 
 ## Architecture
 
-- **Frontend** — React + Vite, served at `/ads-command-center/`
+- **Frontend** — React + Vite, served at `/mission-command-center/`
 - **Backend** — Express server on port 3001, proxied through Vite in dev
 - **Terminal** — WebSocket + node-pty for in-browser terminal sessions
+
+---
+
+## Troubleshooting
+
+**Server won't start** — check `node --version` (must be ≥ 18), then re-run `npm install`.
+
+**Tiles missing** — no projects configured yet. Go to Settings → Projects → Add project.
+
+**Brain capture returns "Failed"** — verify `endpoint_url` is reachable and the env var is exported in the shell where you ran `npm run dev` (`echo $MY_API_KEY`).
+
+**Beads panel shows "No open tasks" when bd is installed** — confirm `bd list` works in the same terminal. Check `which bd` — Command Center looks in `/usr/local/bin` and `/opt/homebrew/bin`.
+
+**Port conflict** — Express runs on 3001, Vite on 5173. Kill with: `lsof -ti:3001 | xargs kill` or `lsof -ti:5173 | xargs kill`.

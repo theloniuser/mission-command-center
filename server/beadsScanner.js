@@ -6,8 +6,8 @@ import { fileURLToPath } from 'url'
 const execAsync = promisify(exec)
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-// Parent project's beads DB (ads-command-center/server/ → ADS-skills/.beads/)
-const BEADS_DB = resolve(__dirname, '../../.beads/beads.db')
+// Look for .beads/beads.db relative to wherever npm run dev is invoked from
+const BEADS_DB = resolve(process.cwd(), '.beads/beads.db')
 
 const KEYWORD_INTERVALS = {
   daily:   1, overnight: 1,

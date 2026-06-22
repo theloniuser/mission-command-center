@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext.jsx'
 import { useSession } from '../../context/SessionContext.jsx'
@@ -29,7 +30,9 @@ function Logo({ theme, brandMode, brandConfig }) {
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const { stats } = useSession()
-  const { brandMode, brandConfig } = useBrand()
+  const { brandMode, brandConfig, title } = useBrand()
+
+  useEffect(() => { document.title = title }, [title])
 
   return (
     <header className="site-header">
@@ -45,7 +48,7 @@ export default function Header() {
       <div className="header-inner">
         <span className="site-logo">
           <Logo theme={theme} brandMode={brandMode} brandConfig={brandConfig} />
-          <span className="site-title">Command Center</span>
+          <span className="site-title">{title}</span>
         </span>
 
         <div className="header-right">

@@ -2,10 +2,12 @@ import { createContext, useContext, useEffect, useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-const BrandContext = createContext({ brandMode: 'ADS', brandConfig: {}, applyBrand: () => {} })
+const DEFAULT_TITLE = 'Mission Command Center'
+
+const BrandContext = createContext({ brandMode: 'Generic', brandConfig: {}, title: DEFAULT_TITLE, applyBrand: () => {}, applyTitle: () => {} })
 
 function getLinkHref(config) {
-  const mode = config?.theme_mode || 'ADS'
+  const mode = config?.theme_mode || 'Generic'
   if (mode === 'Generic') return '/generic-tokens.css'
   if (mode === 'Custom' && config?.token_css_path) {
     return `/api/brand-css?path=${encodeURIComponent(config.token_css_path)}`
@@ -27,7 +29,8 @@ function swapTokenLink(href) {
 }
 
 export function BrandProvider({ children }) {
-  const [brandConfig, setBrandConfig] = useState({ theme_mode: 'ADS', token_css_path: '', logo_path: '', primary_color: '' })
+  const [brandConfig, setBrandConfig] = useState({ theme_mode: 'Generic', token_css_path: '', logo_path: '', primary_color: '' })
+  const [title, setTitle] = useState(DEFAULT_TITLE)
 
   useEffect(() => {
     fetch(`${API_BASE}/api/settings`)
@@ -37,6 +40,7 @@ export function BrandProvider({ children }) {
           setBrandConfig(data.brand)
           swapTokenLink(getLinkHref(data.brand))
         }
+        if (data.title?.trim()) setTitle(data.title.trim())
       })
       .catch(() => {})
   }, [])
@@ -46,8 +50,12 @@ export function BrandProvider({ children }) {
     swapTokenLink(getLinkHref(newConfig))
   }
 
+  function applyTitle(newTitle) {
+    setTitle(newTitle?.trim() || DEFAULT_TITLE)
+  }
+
   return (
-    <BrandContext.Provider value={{ brandMode: brandConfig.theme_mode || 'ADS', brandConfig, applyBrand }}>
+    <BrandContext.Provider value={{ brandMode: brandConfig.theme_mode || 'Generic', brandConfig, title, applyBrand, applyTitle }}>
       {children}
     </BrandContext.Provider>
   )
