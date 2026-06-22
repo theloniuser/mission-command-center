@@ -24,34 +24,22 @@ function gaugeColor(pct) {
   return GAUGE_COLORS.healthy
 }
 
-export default function ProjectTile({ project }) {
+function PaneStatusBar({ terminalId, project, onAddPane, onClose }) {
+  const { sendCommand, getTerminalContent } = useTerminal()
   const tokens = project.token_count ?? 0
-  const pct = Math.min(tokens / THRESHOLD_150K, 1)
   const status = project.status ?? 'no session'
 
-  const m80  = (THRESHOLD_80K  / THRESHOLD_150K) * 100
-  const m120 = (THRESHOLD_120K / THRESHOLD_150K) * 100
-
-  const mcps = project.mcps ?? []
-  const spend = project.spend_usd != null ? `~$${project.spend_usd.toFixed(2)}` : null
-
-  const { play, getPrefs, savePrefs } = useAudio(project.id)
-  const audioPrefs = getPrefs()
-  const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
-  const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
-
-  const { activeTerminalIds, openTerminal, closeTerminal, sendCommand, getTerminalContent, activeChangelogId, openChangelog } = useTerminal()
-  const isExpanded = activeTerminalIds.has(project.id)
-  const showChangelog = activeChangelogId === project.id
-  const changelogRef = useRef(null)
-
-  // compact: idle → confirm → idle
   const [confirmCompact, setConfirmCompact] = useState(false)
   const compactTimer = useRef(null)
 
+  const [handoffPhase, setHandoffPhase] = useState('idle')
+  const handoffTimer = useRef(null)
+
+  useEffect(() => () => { clearTimeout(compactTimer.current); clearTimeout(handoffTimer.current) }, [])
+
   function handleCompactClick() {
     if (confirmCompact) {
-      sendCommand(project.id, '/compact')
+      sendCommand(terminalId, '/compact')
       setConfirmCompact(false)
       clearTimeout(compactTimer.current)
     } else {
@@ -61,21 +49,17 @@ export default function ProjectTile({ project }) {
     }
   }
 
-  // handoff: idle → confirm → copy → copied → idle
-  const [handoffPhase, setHandoffPhase] = useState('idle') // idle | confirm | copy | copied
-  const handoffTimer = useRef(null)
-
   function handleHandoffClick() {
     if (handoffPhase === 'idle') {
       setHandoffPhase('confirm')
       clearTimeout(handoffTimer.current)
       handoffTimer.current = setTimeout(() => setHandoffPhase('idle'), 3000)
     } else if (handoffPhase === 'confirm') {
-      sendCommand(project.id, '/session-handoff')
+      sendCommand(terminalId, '/session-handoff')
       setHandoffPhase('copy')
       clearTimeout(handoffTimer.current)
     } else if (handoffPhase === 'copy' || handoffPhase === 'copied') {
-      const text = getTerminalContent(project.id)
+      const text = getTerminalContent(terminalId)
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
           setHandoffPhase('copied')
@@ -92,7 +76,54 @@ export default function ProjectTile({ project }) {
     }
   }
 
-  useEffect(() => () => { clearTimeout(compactTimer.current); clearTimeout(handoffTimer.current) }, [])
+  return (
+    <div className="tile-status-bar">
+      <span className="tsb-name">{project.name}</span>
+      <span className="tsb-divider" />
+      <span className={`tsb-badge status-${status.replace(' ', '-')}`}>{status}</span>
+      <span className="tsb-divider" />
+      <span className="tsb-item">{project.agent_type ?? 'Claude Code'}</span>
+      <span className="tsb-divider" />
+      <span className="tsb-item">{project.model ?? '—'}</span>
+      <span className="tsb-divider" />
+      <span className="tsb-item">{tokens > 0 ? `${tokens.toLocaleString()} tokens` : '—'}</span>
+      <span className="tsb-divider" />
+      <span className={`tsb-cmd-btn${confirmCompact ? ' tsb-cmd-btn--confirm' : ''}`} role="button" onClick={handleCompactClick}>
+        {confirmCompact ? 'confirm?' : '/compact'}
+      </span>
+      <span className={`tsb-cmd-btn${handoffPhase !== 'idle' ? ' tsb-cmd-btn--confirm' : ''}`} role="button" onClick={handleHandoffClick}>
+        {handoffPhase === 'idle'    && '/handoff'}
+        {handoffPhase === 'confirm' && 'confirm?'}
+        {handoffPhase === 'copy'    && 'copy handoff'}
+        {handoffPhase === 'copied'  && '✓ copied'}
+      </span>
+      <span className="tsb-cmd-btn" role="button" onClick={onAddPane} title="Add a new session pane">+session</span>
+      <button className="tsb-close" onClick={onClose} aria-label="Close session">✕</button>
+    </div>
+  )
+}
+
+export default function ProjectTile({ project }) {
+  const tokens = project.token_count ?? 0
+  const pct = Math.min(tokens / THRESHOLD_150K, 1)
+  const status = project.status ?? 'no session'
+
+  const m80  = (THRESHOLD_80K  / THRESHOLD_150K) * 100
+  const m120 = (THRESHOLD_120K / THRESHOLD_150K) * 100
+
+  const mcps = project.mcps ?? []
+  const spend = project.spend_usd != null ? `~$${project.spend_usd.toFixed(2)}` : null
+
+  const { play, getPrefs, savePrefs } = useAudio(project.id)
+  const audioPrefs = getPrefs()
+  const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
+  const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
+
+  const { getTerminalIds, openTerminal, addTerminalPane, closeTerminalPane, sendCommand, activeChangelogId, openChangelog } = useTerminal()
+  const terminalIds = getTerminalIds(project.id)
+  const isExpanded = terminalIds.length > 0
+  const showChangelog = activeChangelogId === project.id
+  const changelogRef = useRef(null)
 
   useEffect(() => {
     if (showChangelog && changelogRef.current) {
@@ -143,29 +174,17 @@ export default function ProjectTile({ project }) {
     return (
       <article className="project-tile project-tile--expanded">
         <div className="tile-color-bar" style={{ background: project.color }} />
-        <TerminalPane projectPath={project.path} projectId={project.id} />
-        <div className="tile-status-bar">
-          <span className="tsb-name">{project.name}</span>
-          <span className="tsb-divider" />
-          <span className={`tsb-badge status-${status.replace(' ', '-')}`}>{status}</span>
-          <span className="tsb-divider" />
-          <span className="tsb-item">{project.agent_type ?? 'Claude Code'}</span>
-          <span className="tsb-divider" />
-          <span className="tsb-item">{project.model ?? '—'}</span>
-          <span className="tsb-divider" />
-          <span className="tsb-item">{tokens > 0 ? `${tokens.toLocaleString()} tokens` : '—'}</span>
-          <span className="tsb-divider" />
-          <span className={`tsb-cmd-btn${confirmCompact ? ' tsb-cmd-btn--confirm' : ''}`} role="button" onClick={handleCompactClick}>
-            {confirmCompact ? 'confirm?' : '/compact'}
-          </span>
-          <span className={`tsb-cmd-btn${handoffPhase !== 'idle' ? ' tsb-cmd-btn--confirm' : ''}`} role="button" onClick={handleHandoffClick}>
-            {handoffPhase === 'idle'    && '/handoff'}
-            {handoffPhase === 'confirm' && 'confirm?'}
-            {handoffPhase === 'copy'    && 'copy handoff'}
-            {handoffPhase === 'copied'  && '✓ copied'}
-          </span>
-          <button className="tsb-close" onClick={() => closeTerminal(project.id)} aria-label="Close terminal">✕</button>
-        </div>
+        {terminalIds.map((terminalId) => (
+          <div key={terminalId} className="terminal-pane-wrapper">
+            <TerminalPane projectPath={project.path} projectId={project.id} terminalId={terminalId} />
+            <PaneStatusBar
+              terminalId={terminalId}
+              project={project}
+              onAddPane={() => addTerminalPane(project.id)}
+              onClose={() => closeTerminalPane(terminalId)}
+            />
+          </div>
+        ))}
       </article>
     )
   }

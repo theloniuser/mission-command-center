@@ -31,7 +31,8 @@ const LIGHT_THEME = {
   brightCyan: '#339fd9',
 }
 
-export default function TerminalPane({ projectPath, projectId }) {
+export default function TerminalPane({ projectPath, projectId, terminalId: terminalIdProp }) {
+  const terminalId = terminalIdProp ?? projectId
   const containerRef = useRef(null)
   const termRef = useRef(null)
   const { theme } = useTheme()
@@ -67,15 +68,15 @@ export default function TerminalPane({ projectPath, projectId }) {
       const { cols, rows } = term
       ws.send(JSON.stringify({ type: 'init', projectPath, cols, rows }))
 
-      registerTerminal(projectId, (data) => {
+      registerTerminal(terminalId, (data) => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'input', data }))
         }
       })
-      registerTerminalFocus(projectId, () => term.focus())
+      registerTerminalFocus(terminalId, () => term.focus())
       // eslint-disable-next-line no-control-regex
       const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][AB012]/g
-      registerTerminalReader(projectId, () => {
+      registerTerminalReader(terminalId, () => {
         const buf = term.buffer.active
         const lines = []
         for (let i = 0; i < buf.length; i++) {
@@ -84,7 +85,7 @@ export default function TerminalPane({ projectPath, projectId }) {
         return lines.join('\n').replace(ANSI_RE, '').trimEnd()
       })
 
-      const pending = consumePendingCommand(projectId)
+      const pending = consumePendingCommand(terminalId)
       if (pending) {
         setTimeout(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -115,9 +116,9 @@ export default function TerminalPane({ projectPath, projectId }) {
     ro.observe(containerRef.current)
 
     return () => {
-      unregisterTerminal(projectId)
-      unregisterTerminalFocus(projectId)
-      unregisterTerminalReader(projectId)
+      unregisterTerminal(terminalId)
+      unregisterTerminalFocus(terminalId)
+      unregisterTerminalReader(terminalId)
       ro.disconnect()
       ws.close()
       term.dispose()

@@ -3,26 +3,66 @@ import { createContext, useContext, useRef, useState } from 'react'
 const TerminalContext = createContext(null)
 
 export function TerminalProvider({ children }) {
-  const [activeTerminalIds, setActiveTerminalIds] = useState(new Set())
+  // Map<projectId, terminalId[]> — first terminalId always === projectId for compat
+  const [projectTerminals, setProjectTerminals] = useState(new Map())
   const [activeChangelogId, setActiveChangelogId] = useState(null)
   const pendingCommandsRef  = useRef({})
   const terminalWritersRef  = useRef({})
   const terminalFocusRef    = useRef({})
   const terminalReadersRef  = useRef({})
+  const paneCounterRef      = useRef({})
 
-  function openTerminal(id) {
-    setActiveTerminalIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+  function getTerminalIds(projectId) {
+    return projectTerminals.get(projectId) ?? []
+  }
+
+  function openTerminal(projectId) {
+    setProjectTerminals(prev => {
+      const existing = prev.get(projectId) ?? []
+      const next = new Map(prev)
+      if (existing.length > 0) {
+        next.delete(projectId)
+      } else {
+        next.set(projectId, [projectId])
+      }
       return next
     })
   }
 
-  function closeTerminal(id) {
-    setActiveTerminalIds(prev => {
-      const next = new Set(prev)
-      next.delete(id)
+  function addTerminalPane(projectId) {
+    setProjectTerminals(prev => {
+      const existing = prev.get(projectId) ?? []
+      const next = new Map(prev)
+      if (existing.length === 0) {
+        next.set(projectId, [projectId])
+        return next
+      }
+      const count = (paneCounterRef.current[projectId] ?? 0) + 1
+      paneCounterRef.current[projectId] = count
+      next.set(projectId, [...existing, `${projectId}::${count}`])
+      return next
+    })
+  }
+
+  function closeTerminalPane(terminalId) {
+    const projectId = terminalId.includes('::') ? terminalId.split('::')[0] : terminalId
+    setProjectTerminals(prev => {
+      const existing = prev.get(projectId) ?? []
+      const filtered = existing.filter(id => id !== terminalId)
+      const next = new Map(prev)
+      if (filtered.length === 0) next.delete(projectId)
+      else next.set(projectId, filtered)
+      return next
+    })
+    delete terminalWritersRef.current[terminalId]
+    delete terminalFocusRef.current[terminalId]
+    delete terminalReadersRef.current[terminalId]
+  }
+
+  function closeTerminal(projectId) {
+    setProjectTerminals(prev => {
+      const next = new Map(prev)
+      next.delete(projectId)
       return next
     })
   }
@@ -77,10 +117,13 @@ export function TerminalProvider({ children }) {
 
   return (
     <TerminalContext.Provider value={{
-      activeTerminalIds, openTerminal, closeTerminal,
-      sendCommand, consumePendingCommand, registerTerminal, unregisterTerminal,
+      projectTerminals, getTerminalIds,
+      openTerminal, addTerminalPane, closeTerminalPane, closeTerminal,
+      sendCommand, consumePendingCommand,
+      registerTerminal, unregisterTerminal,
       registerTerminalFocus, unregisterTerminalFocus,
-      registerTerminalReader, unregisterTerminalReader, getTerminalContent,
+      registerTerminalReader, unregisterTerminalReader,
+      getTerminalContent,
       activeChangelogId, openChangelog,
     }}>
       {children}
