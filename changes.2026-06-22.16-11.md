@@ -31,5 +31,9 @@
 - `src/context/TerminalContext.jsx` — `Map<projectId, terminalId[]>` replacing `Set`, added `addTerminalPane`, `closeTerminalPane`, `getTerminalIds`
 - `src/styles/main.css` — pane wrapper/header styles, minimize button, chevron, ACTIVE color
 
+**Two-click confirm before closing a pane** (`2725736`)
+- First click on `✕` shows `close?` in orange (same pattern as `/compact`)
+- Second click closes; auto-resets after 3s if not confirmed
+
 ### Architecture note
 First pane always gets `terminalId === projectId` so existing `/compact` and `/handoff` commands continue to work against the primary session without changes.
