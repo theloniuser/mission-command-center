@@ -481,7 +481,7 @@ if (existsSync(distPath)) {
 // On reconnect with the same terminalId, the existing PTY is reattached
 // and buffered output is replayed — session persists across navigation.
 
-const SESSION_TIMEOUT_MS = 30_000
+const SESSION_TIMEOUT_MS = 600_000  // 10 min — survives typical sleep/wake cycles
 const BUFFER_MAX = 500
 const ptySessions = new Map() // terminalId → { ptyProcess, buffer, ws, cleanupTimer }
 

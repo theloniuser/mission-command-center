@@ -31,10 +31,14 @@ const LIGHT_THEME = {
   brightCyan: '#339fd9',
 }
 
+// eslint-disable-next-line no-control-regex
+const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][AB012]/g
+
 export default function TerminalPane({ projectPath, projectId, terminalId: terminalIdProp, launchCommand }) {
   const terminalId = terminalIdProp ?? projectId
   const containerRef = useRef(null)
   const termRef = useRef(null)
+  const wsRef = useRef(null)
   const { theme } = useTheme()
   const { consumePendingCommand, registerTerminal, unregisterTerminal, registerTerminalFocus, unregisterTerminalFocus, registerTerminalReader, unregisterTerminalReader } = useTerminal()
 
@@ -62,48 +66,70 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
 
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const wsUrl = `${proto}://${window.location.host}/terminal`
-    const ws = new WebSocket(wsUrl)
 
-    ws.onopen = () => {
-      const { cols, rows } = term
-      ws.send(JSON.stringify({ type: 'init', terminalId, projectPath, launchCommand: launchCommand || '', cols, rows }))
+    let shouldReconnect = true
+    let isFirstConnect = true
 
-      registerTerminal(terminalId, (data) => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'input', data }))
+    function connect() {
+      const ws = new WebSocket(wsUrl)
+      wsRef.current = ws
+
+      ws.onopen = () => {
+        const { cols, rows } = term
+
+        if (!isFirstConnect) {
+          // Clear the terminal before buffer replay so content isn't doubled
+          term.reset()
         }
-      })
-      registerTerminalFocus(terminalId, () => term.focus())
-      // eslint-disable-next-line no-control-regex
-      const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][AB012]/g
-      registerTerminalReader(terminalId, () => {
-        const buf = term.buffer.active
-        const lines = []
-        for (let i = 0; i < buf.length; i++) {
-          lines.push(buf.getLine(i)?.translateToString(true) ?? '')
-        }
-        return lines.join('\n').replace(ANSI_RE, '').trimEnd()
-      })
+        isFirstConnect = false
 
-      const pending = consumePendingCommand(terminalId)
-      if (pending) {
-        setTimeout(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'input', data: pending }))
-            term.focus()
-          }
-        }, 700)
+        ws.send(JSON.stringify({ type: 'init', terminalId, projectPath, launchCommand: launchCommand || '', cols, rows }))
+
+        // Only consume pending command on fresh connect (not reconnect after sleep)
+        const pending = consumePendingCommand(terminalId)
+        if (pending) {
+          setTimeout(() => {
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({ type: 'input', data: pending }))
+              term.focus()
+            }
+          }, 700)
+        }
+      }
+
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data)
+        if (msg.type === 'output') term.write(msg.data)
+      }
+
+      ws.onclose = () => {
+        if (!shouldReconnect) return
+        term.write('\r\n\x1b[33m[Connection lost — reconnecting...]\x1b[0m\r\n')
+        setTimeout(connect, 3000)
       }
     }
 
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data)
-      if (msg.type === 'output') term.write(msg.data)
-    }
+    connect()
+
+    // These callbacks use wsRef.current so they always target the active connection
+    registerTerminal(terminalId, (data) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'input', data }))
+      }
+    })
+    registerTerminalFocus(terminalId, () => term.focus())
+    registerTerminalReader(terminalId, () => {
+      const buf = term.buffer.active
+      const lines = []
+      for (let i = 0; i < buf.length; i++) {
+        lines.push(buf.getLine(i)?.translateToString(true) ?? '')
+      }
+      return lines.join('\n').replace(ANSI_RE, '').trimEnd()
+    })
 
     term.onData(data => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'input', data }))
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'input', data }))
       }
     })
 
@@ -111,18 +137,20 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       const el = containerRef.current
       if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) return
       fitAddon.fit()
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }))
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }))
       }
     })
     ro.observe(containerRef.current)
 
     return () => {
+      shouldReconnect = false  // prevent reconnect on intentional close
       unregisterTerminal(terminalId)
       unregisterTerminalFocus(terminalId)
       unregisterTerminalReader(terminalId)
       ro.disconnect()
-      ws.close()
+      wsRef.current?.close()
+      wsRef.current = null
       term.dispose()
       termRef.current = null
     }
