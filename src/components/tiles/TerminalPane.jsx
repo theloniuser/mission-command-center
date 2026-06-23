@@ -166,5 +166,43 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     return () => el.removeEventListener('wheel', block)
   }, [])
 
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const onDragOver = (e) => e.preventDefault()
+
+    const onDrop = async (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const files = Array.from(e.dataTransfer.files)
+      if (!files.length) return
+      for (const file of files) {
+        let content
+        if (/\.(txt|md|markdown|json|js|jsx|ts|tsx|css|html|htm|xml|yaml|yml|csv|sh|py|rb|go|rs|c|cpp|h|java|swift|kt|vue|svelte)$/i.test(file.name)) {
+          content = await new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = (ev) => resolve(ev.target.result)
+            reader.onerror = reject
+            reader.readAsText(file)
+          })
+        } else {
+          content = file.name
+        }
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'input', data: content }))
+        }
+      }
+      termRef.current?.focus()
+    }
+
+    el.addEventListener('dragover', onDragOver)
+    el.addEventListener('drop', onDrop)
+    return () => {
+      el.removeEventListener('dragover', onDragOver)
+      el.removeEventListener('drop', onDrop)
+    }
+  }, [])
+
   return <div className="terminal-container" ref={containerRef} />
 }

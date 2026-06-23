@@ -70,11 +70,15 @@ export default function BrainCapture({ inline = false, onCaptured }) {
     return (
       <div className="brain-capture-inline">
         <input
-          className="brain-capture-input-inline"
-          placeholder="Capture a thought to Brain..."
+          className={`brain-capture-input-inline${dragging ? ' brain-capture-drop-active' : ''}`}
+          placeholder="Capture a thought to Brain... (or drop a file)"
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={handleKeyDown}
+          onDragEnter={(e) => { e.preventDefault(); setDragging(true) }}
+          onDragOver={(e) => e.preventDefault()}
+          onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
           disabled={status === 'sending'}
         />
         {status === 'error' && <span className="brain-capture-err">Failed</span>}
