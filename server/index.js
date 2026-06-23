@@ -477,51 +477,92 @@ if (existsSync(distPath)) {
 }
 
 // ── WebSocket + PTY ───────────────────────────────────────
+// PTY sessions survive WebSocket disconnects for SESSION_TIMEOUT_MS.
+// On reconnect with the same terminalId, the existing PTY is reattached
+// and buffered output is replayed — session persists across navigation.
+
+const SESSION_TIMEOUT_MS = 30_000
+const BUFFER_MAX = 500
+const ptySessions = new Map() // terminalId → { ptyProcess, buffer, ws, cleanupTimer }
 
 const wss = new WebSocketServer({ server, path: '/terminal' })
 
 wss.on('connection', (ws) => {
-  let ptyProcess = null
+  let sessionKey = null
 
   ws.on('message', (raw) => {
     let msg
     try { msg = JSON.parse(raw) } catch { return }
 
-    if (msg.type === 'init' && !ptyProcess) {
+    if (msg.type === 'init') {
+      sessionKey = msg.terminalId || msg.projectPath
+
+      if (ptySessions.has(sessionKey)) {
+        // Reconnect to existing PTY — cancel cleanup, swap ws, replay buffer
+        const session = ptySessions.get(sessionKey)
+        clearTimeout(session.cleanupTimer)
+        session.ws = ws
+        for (const chunk of session.buffer) {
+          if (ws.readyState === ws.OPEN) ws.send(JSON.stringify({ type: 'output', data: chunk }))
+        }
+        if (session.ptyProcess && msg.cols && msg.rows) {
+          session.ptyProcess.resize(Math.max(1, msg.cols), Math.max(1, msg.rows))
+        }
+        return
+      }
+
+      // New session — spawn PTY
       const cwd = (msg.projectPath || os.homedir()).replace(/^~/, os.homedir())
-      ptyProcess = pty.spawn('/bin/zsh', [], {
+      const ptyProcess = pty.spawn('/bin/zsh', [], {
         name: 'xterm-color',
         cols: msg.cols || 80,
         rows: msg.rows || 24,
         cwd,
         env: { ...process.env, TERM: 'xterm-256color' },
       })
+
+      const session = { ptyProcess, buffer: [], ws, cleanupTimer: null }
+      ptySessions.set(sessionKey, session)
+
       ptyProcess.onData(data => {
-        if (ws.readyState === ws.OPEN) {
-          ws.send(JSON.stringify({ type: 'output', data }))
+        session.buffer.push(data)
+        if (session.buffer.length > BUFFER_MAX) session.buffer.shift()
+        if (session.ws?.readyState === session.ws?.OPEN) {
+          session.ws.send(JSON.stringify({ type: 'output', data }))
         }
       })
+
       ptyProcess.onExit(() => {
-        if (ws.readyState === ws.OPEN) ws.close()
+        clearTimeout(session.cleanupTimer)
+        ptySessions.delete(sessionKey)
+        if (session.ws?.readyState === session.ws?.OPEN) session.ws.close()
       })
+
       if (msg.launchCommand) {
-        setTimeout(() => {
-          if (ptyProcess) ptyProcess.write(msg.launchCommand + '\r')
-        }, 400)
+        setTimeout(() => { ptyProcess.write(msg.launchCommand + '\r') }, 400)
       }
     }
 
-    if (msg.type === 'input' && ptyProcess) {
-      ptyProcess.write(msg.data)
+    if (msg.type === 'input' && sessionKey) {
+      ptySessions.get(sessionKey)?.ptyProcess?.write(msg.data)
     }
 
-    if (msg.type === 'resize' && ptyProcess) {
-      ptyProcess.resize(Math.max(1, msg.cols), Math.max(1, msg.rows))
+    if (msg.type === 'resize' && sessionKey) {
+      const session = ptySessions.get(sessionKey)
+      if (session?.ptyProcess) session.ptyProcess.resize(Math.max(1, msg.cols), Math.max(1, msg.rows))
     }
   })
 
   ws.on('close', () => {
-    if (ptyProcess) { ptyProcess.kill(); ptyProcess = null }
+    if (!sessionKey) return
+    const session = ptySessions.get(sessionKey)
+    if (!session) return
+    session.ws = null
+    // Keep PTY alive; kill after timeout if no reconnect
+    session.cleanupTimer = setTimeout(() => {
+      session.ptyProcess?.kill()
+      ptySessions.delete(sessionKey)
+    }, SESSION_TIMEOUT_MS)
   })
 })
 

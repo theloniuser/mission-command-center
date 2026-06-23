@@ -66,7 +66,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
 
     ws.onopen = () => {
       const { cols, rows } = term
-      ws.send(JSON.stringify({ type: 'init', projectPath, launchCommand: launchCommand || '', cols, rows }))
+      ws.send(JSON.stringify({ type: 'init', terminalId, projectPath, launchCommand: launchCommand || '', cols, rows }))
 
       registerTerminal(terminalId, (data) => {
         if (ws.readyState === WebSocket.OPEN) {
