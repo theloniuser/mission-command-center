@@ -2,15 +2,41 @@ import { useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
+const TEXT_EXTS = /\.(txt|md|markdown|json|js|jsx|ts|tsx|css|html|htm|xml|yaml|yml|csv|sh|py|rb|go|rs|c|cpp|h|java|swift|kt|vue|svelte)$/i
+
+function readFile(file) {
+  if (TEXT_EXTS.test(file.name)) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => resolve(e.target.result)
+      reader.onerror = reject
+      reader.readAsText(file)
+    })
+  }
+  return Promise.resolve(`[${file.name}]`)
+}
+
 export default function BrainCapture({ inline = false, onCaptured }) {
-  const [text, setText]     = useState('')
-  const [status, setStatus] = useState(null) // null | 'sending' | 'ok' | 'error'
+  const [text, setText]       = useState('')
+  const [status, setStatus]   = useState(null) // null | 'sending' | 'ok' | 'error'
+  const [dragging, setDragging] = useState(false)
 
   function handleKeyDown(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       submit()
     }
+  }
+
+  async function handleDrop(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragging(false)
+    const files = Array.from(e.dataTransfer.files)
+    if (!files.length) return
+    const contents = await Promise.all(files.map(readFile))
+    const inserted = contents.join('\n\n')
+    setText(prev => prev ? `${prev}\n\n${inserted}` : inserted)
   }
 
   async function submit() {
@@ -64,11 +90,15 @@ export default function BrainCapture({ inline = false, onCaptured }) {
   return (
     <div className="brain-capture">
       <textarea
-        className="brain-capture-input"
-        placeholder="Capture a thought to Brain..."
+        className={`brain-capture-input${dragging ? ' brain-capture-drop-active' : ''}`}
+        placeholder="Capture a thought to Brain... (or drop a file)"
         value={text}
         onChange={e => setText(e.target.value)}
         onKeyDown={handleKeyDown}
+        onDragEnter={(e) => { e.preventDefault(); setDragging(true) }}
+        onDragOver={(e) => e.preventDefault()}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
         rows={2}
         disabled={status === 'sending'}
       />

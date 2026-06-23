@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, useLocation } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { BrandProvider } from './context/BrandContext.jsx'
@@ -12,6 +13,16 @@ function AppLayout() {
   const { launcherOpen, launcherBead, closeLauncher } = useSession()
   const location = useLocation()
   const isSettings = location.pathname.startsWith('/settings')
+
+  useEffect(() => {
+    const prevent = (e) => e.preventDefault()
+    document.addEventListener('dragover', prevent)
+    document.addEventListener('drop', prevent)
+    return () => {
+      document.removeEventListener('dragover', prevent)
+      document.removeEventListener('drop', prevent)
+    }
+  }, [])
 
   return (
     <>

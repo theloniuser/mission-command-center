@@ -1234,6 +1234,7 @@ html[data-theme="dark"] .eyebrow {
 }
 .brain-capture-input:focus { border-color: var(--color-orange-ui); box-shadow: var(--hub-focus-ring); }
 .brain-capture-input::placeholder { color: var(--hub-text-fade); }
+.brain-capture-drop-active { border-color: var(--color-orange-ui) !important; box-shadow: 0 0 0 2px rgba(183,91,0,0.25) !important; }
 .brain-capture-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
 .brain-capture-inline { display: flex; align-items: center; gap: 6px; }
 .brain-capture-input-inline { background: var(--hub-bg); border: 1px solid var(--hub-border); border-radius: 4px; color: var(--hub-text); font-family: var(--font-body); font-size: 11px; padding: 3px 8px; width: 180px; outline: none; }
