@@ -108,6 +108,8 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     })
 
     const ro = new ResizeObserver(() => {
+      const el = containerRef.current
+      if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) return
       fitAddon.fit()
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }))

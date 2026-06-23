@@ -166,8 +166,10 @@ export default function ProjectTile({ project }) {
   const myAlerts = alerts.filter(a => a.projectId === project.id)
   const prevAlertCountRef  = useRef(0)
   const prevNeedsRespRef   = useRef(false)
+  const audioMountedRef    = useRef(false)
 
   useEffect(() => {
+    if (!audioMountedRef.current) { prevAlertCountRef.current = myAlerts.length; audioMountedRef.current = true; return }
     if (myAlerts.length > prevAlertCountRef.current) {
       const prefs = getPrefs()
       if (prefs.enabled !== false) play(prefs.sound || 'chime')
@@ -177,7 +179,7 @@ export default function ProjectTile({ project }) {
 
   useEffect(() => {
     const nowNeeds = !!project.needs_response
-    if (nowNeeds && !prevNeedsRespRef.current) {
+    if (audioMountedRef.current && nowNeeds && !prevNeedsRespRef.current) {
       const prefs = getPrefs()
       if (prefs.enabled !== false) play(prefs.sound || 'chime')
     }
