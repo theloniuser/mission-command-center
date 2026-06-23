@@ -33,6 +33,9 @@ const LIGHT_THEME = {
 
 // eslint-disable-next-line no-control-regex
 const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][AB012]/g
+const RECONNECT_BASE_MS = 750
+const RECONNECT_MAX_MS = 10_000
+const RECONNECT_MAX_ATTEMPTS = 12
 
 export default function TerminalPane({ projectPath, projectId, terminalId: terminalIdProp, launchCommand }) {
   const terminalId = terminalIdProp ?? projectId
@@ -69,28 +72,96 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
 
     let shouldReconnect = true
     let isFirstConnect = true
+    let reconnectAttempts = 0
+    let socketSeq = 0
+    let reconnectTimer = null
+    let pendingCommandTimer = null
+    let reconnectNoticeShown = false
 
-    function connect() {
+    function socketIsCurrent(ws, seq) {
+      return shouldReconnect && wsRef.current === ws && socketSeq === seq
+    }
+
+    function clearReconnectTimer() {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer)
+        reconnectTimer = null
+      }
+    }
+
+    function send(ws, payload) {
+      if (ws?.readyState !== WebSocket.OPEN) return
+      try {
+        ws.send(JSON.stringify(payload))
+      } catch {
+        scheduleReconnect('send-failed')
+      }
+    }
+
+    function scheduleReconnect(reason = 'closed') {
+      if (!shouldReconnect || reconnectTimer) return
+      if (reconnectAttempts >= RECONNECT_MAX_ATTEMPTS) {
+        term.write(`\r\n\x1b[31m[Connection unavailable after ${RECONNECT_MAX_ATTEMPTS} attempts. Reconnect will retry when the browser wakes or comes online.]\x1b[0m\r\n`)
+        return
+      }
+
+      const delay = Math.min(RECONNECT_BASE_MS * 2 ** reconnectAttempts, RECONNECT_MAX_MS)
+      reconnectAttempts += 1
+      if (!reconnectNoticeShown) {
+        term.write('\r\n\x1b[33m[Connection lost - reconnecting...]\x1b[0m\r\n')
+        reconnectNoticeShown = true
+      }
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null
+        connect(reason)
+      }, delay)
+    }
+
+    function reconnectNow() {
+      if (!shouldReconnect) return
+      const current = wsRef.current
+      if (current?.readyState === WebSocket.OPEN || current?.readyState === WebSocket.CONNECTING) return
+      reconnectAttempts = 0
+      clearReconnectTimer()
+      connect('wake')
+    }
+
+    function connect(reason = 'initial') {
+      if (!shouldReconnect) return
+      const current = wsRef.current
+      if (current?.readyState === WebSocket.OPEN || current?.readyState === WebSocket.CONNECTING) return
+
       const ws = new WebSocket(wsUrl)
+      const seq = socketSeq + 1
+      socketSeq = seq
       wsRef.current = ws
 
       ws.onopen = () => {
+        if (!socketIsCurrent(ws, seq)) {
+          ws.close()
+          return
+        }
         const { cols, rows } = term
+        const wasFirstConnect = isFirstConnect
 
-        if (!isFirstConnect) {
+        reconnectAttempts = 0
+        reconnectNoticeShown = false
+
+        if (!wasFirstConnect) {
           // Clear the terminal before buffer replay so content isn't doubled
           term.reset()
         }
         isFirstConnect = false
 
-        ws.send(JSON.stringify({ type: 'init', terminalId, projectPath, launchCommand: launchCommand || '', cols, rows }))
+        send(ws, { type: 'init', terminalId, projectPath, launchCommand: launchCommand || '', cols, rows })
 
         // Only consume pending command on fresh connect (not reconnect after sleep)
-        const pending = consumePendingCommand(terminalId)
+        const pending = wasFirstConnect ? consumePendingCommand(terminalId) : null
         if (pending) {
-          setTimeout(() => {
-            if (wsRef.current?.readyState === WebSocket.OPEN) {
-              wsRef.current.send(JSON.stringify({ type: 'input', data: pending }))
+          pendingCommandTimer = setTimeout(() => {
+            pendingCommandTimer = null
+            if (socketIsCurrent(ws, seq) && ws.readyState === WebSocket.OPEN) {
+              send(ws, { type: 'input', data: pending })
               term.focus()
             }
           }, 700)
@@ -98,14 +169,23 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       }
 
       ws.onmessage = (e) => {
-        const msg = JSON.parse(e.data)
+        if (!socketIsCurrent(ws, seq)) return
+        let msg
+        try { msg = JSON.parse(e.data) } catch { return }
         if (msg.type === 'output') term.write(msg.data)
       }
 
+      ws.onerror = () => {
+        if (!socketIsCurrent(ws, seq)) return
+        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) ws.close()
+        scheduleReconnect('error')
+      }
+
       ws.onclose = () => {
+        if (!socketIsCurrent(ws, seq)) return
+        wsRef.current = null
         if (!shouldReconnect) return
-        term.write('\r\n\x1b[33m[Connection lost — reconnecting...]\x1b[0m\r\n')
-        setTimeout(connect, 3000)
+        scheduleReconnect(reason)
       }
     }
 
@@ -114,7 +194,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     // These callbacks use wsRef.current so they always target the active connection
     registerTerminal(terminalId, (data) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: 'input', data }))
+        send(wsRef.current, { type: 'input', data })
       }
     })
     registerTerminalFocus(terminalId, () => term.focus())
@@ -127,9 +207,9 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       return lines.join('\n').replace(ANSI_RE, '').trimEnd()
     })
 
-    term.onData(data => {
+    const dataDisposable = term.onData(data => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: 'input', data }))
+        send(wsRef.current, { type: 'input', data })
       }
     })
 
@@ -138,16 +218,32 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) return
       fitAddon.fit()
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }))
+        send(wsRef.current, { type: 'resize', cols: term.cols, rows: term.rows })
       }
     })
     ro.observe(containerRef.current)
 
+    const onWakeSignal = () => reconnectNow()
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') reconnectNow()
+    }
+    window.addEventListener('online', onWakeSignal)
+    window.addEventListener('focus', onWakeSignal)
+    window.addEventListener('pageshow', onWakeSignal)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
     return () => {
       shouldReconnect = false  // prevent reconnect on intentional close
+      clearReconnectTimer()
+      clearTimeout(pendingCommandTimer)
+      window.removeEventListener('online', onWakeSignal)
+      window.removeEventListener('focus', onWakeSignal)
+      window.removeEventListener('pageshow', onWakeSignal)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       unregisterTerminal(terminalId)
       unregisterTerminalFocus(terminalId)
       unregisterTerminalReader(terminalId)
+      dataDisposable.dispose()
       ro.disconnect()
       wsRef.current?.close()
       wsRef.current = null

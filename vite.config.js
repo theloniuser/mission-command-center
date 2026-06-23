@@ -6,14 +6,18 @@ export default defineConfig({
   base: '/ads-command-center/',
   server: {
     port: 5173,
+    host: true,
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
       '/terminal': {
-        target: 'ws://localhost:3002',
+        target: 'ws://localhost:3001',
+        changeOrigin: true,
         ws: true,
+        timeout: 0,
+        proxyTimeout: 0,
       },
     },
   },

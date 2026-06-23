@@ -1,6 +1,6 @@
 import express from 'express'
 import http from 'http'
-import { WebSocketServer } from 'ws'
+import { WebSocket, WebSocketServer } from 'ws'
 import pty from 'node-pty'
 import os from 'os'
 import cors from 'cors'
@@ -445,6 +445,18 @@ app.post('/api/mkdir', async (req, res) => {
   }
 })
 
+app.post('/api/browse-folder', async (req, res) => {
+  try {
+    const { stdout } = await execAsync(
+      `osascript -e 'POSIX path of (choose folder with prompt "Select project directory:")'`
+    )
+    res.json({ path: stdout.trim() })
+  } catch {
+    // User cancelled or osascript unavailable
+    res.json({ path: null })
+  }
+})
+
 // ── Settings ──────────────────────────────────────────────
 
 app.get('/api/settings', (req, res) => {
@@ -482,13 +494,30 @@ if (existsSync(distPath)) {
 // and buffered output is replayed — session persists across navigation.
 
 const SESSION_TIMEOUT_MS = 600_000  // 10 min — survives typical sleep/wake cycles
+const WS_HEARTBEAT_MS = 30_000
 const BUFFER_MAX = 500
 const ptySessions = new Map() // terminalId → { ptyProcess, buffer, ws, cleanupTimer }
 
 const wss = new WebSocketServer({ server, path: '/terminal' })
 
+function sendJson(ws, payload, label) {
+  if (ws?.readyState !== WebSocket.OPEN) return
+  ws.send(JSON.stringify(payload), (err) => {
+    if (err) console.error(`[${label}]`, err.code || err.message)
+  })
+}
+
 wss.on('connection', (ws) => {
   let sessionKey = null
+  ws.isAlive = true
+
+  ws.on('pong', () => {
+    ws.isAlive = true
+  })
+
+  ws.on('error', (err) => {
+    console.error('[ws error]', err.code || err.message)
+  })
 
   ws.on('message', (raw) => {
     let msg
@@ -496,14 +525,21 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'init') {
       sessionKey = msg.terminalId || msg.projectPath
+      if (!sessionKey) {
+        ws.close(1008, 'terminalId or projectPath required')
+        return
+      }
 
       if (ptySessions.has(sessionKey)) {
         // Reconnect to existing PTY — cancel cleanup, swap ws, replay buffer
         const session = ptySessions.get(sessionKey)
         clearTimeout(session.cleanupTimer)
+        if (session.ws && session.ws !== ws && session.ws.readyState < WebSocket.CLOSING) {
+          session.ws.close(4000, 'superseded by reconnect')
+        }
         session.ws = ws
         for (const chunk of session.buffer) {
-          if (ws.readyState === ws.OPEN) ws.send(JSON.stringify({ type: 'output', data: chunk }))
+          sendJson(ws, { type: 'output', data: chunk }, 'ws replay error')
         }
         if (session.ptyProcess && msg.cols && msg.rows) {
           session.ptyProcess.resize(Math.max(1, msg.cols), Math.max(1, msg.rows))
@@ -523,19 +559,18 @@ wss.on('connection', (ws) => {
 
       const session = { ptyProcess, buffer: [], ws, cleanupTimer: null }
       ptySessions.set(sessionKey, session)
+      const key = sessionKey
 
       ptyProcess.onData(data => {
         session.buffer.push(data)
         if (session.buffer.length > BUFFER_MAX) session.buffer.shift()
-        if (session.ws?.readyState === session.ws?.OPEN) {
-          session.ws.send(JSON.stringify({ type: 'output', data }))
-        }
+        sendJson(session.ws, { type: 'output', data }, 'ws send error')
       })
 
       ptyProcess.onExit(() => {
         clearTimeout(session.cleanupTimer)
-        ptySessions.delete(sessionKey)
-        if (session.ws?.readyState === session.ws?.OPEN) session.ws.close()
+        if (ptySessions.get(key) === session) ptySessions.delete(key)
+        if (session.ws?.readyState === WebSocket.OPEN) session.ws.close()
       })
 
       if (msg.launchCommand) {
@@ -544,12 +579,13 @@ wss.on('connection', (ws) => {
     }
 
     if (msg.type === 'input' && sessionKey) {
-      ptySessions.get(sessionKey)?.ptyProcess?.write(msg.data)
+      const session = ptySessions.get(sessionKey)
+      if (session?.ws === ws) session.ptyProcess?.write(msg.data)
     }
 
     if (msg.type === 'resize' && sessionKey) {
       const session = ptySessions.get(sessionKey)
-      if (session?.ptyProcess) session.ptyProcess.resize(Math.max(1, msg.cols), Math.max(1, msg.rows))
+      if (session?.ws === ws && session.ptyProcess) session.ptyProcess.resize(Math.max(1, msg.cols), Math.max(1, msg.rows))
     }
   })
 
@@ -557,16 +593,53 @@ wss.on('connection', (ws) => {
     if (!sessionKey) return
     const session = ptySessions.get(sessionKey)
     if (!session) return
+    if (session.ws !== ws) return
     session.ws = null
+    clearTimeout(session.cleanupTimer)
     // Keep PTY alive; kill after timeout if no reconnect
     session.cleanupTimer = setTimeout(() => {
       session.ptyProcess?.kill()
-      ptySessions.delete(sessionKey)
+      if (ptySessions.get(sessionKey) === session) ptySessions.delete(sessionKey)
     }, SESSION_TIMEOUT_MS)
   })
 })
 
+const heartbeat = setInterval(() => {
+  for (const ws of wss.clients) {
+    if (ws.isAlive === false) {
+      ws.terminate()
+      continue
+    }
+    ws.isAlive = false
+    ws.ping()
+  }
+}, WS_HEARTBEAT_MS)
+
+wss.on('close', () => {
+  clearInterval(heartbeat)
+})
+
+// ── Global error guards — prevent unhandled events from crashing the process ──
+
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err)
+  process.exit(1)
+})
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason)
+})
+
+wss.on('error', (err) => {
+  console.error('[wss error]', err)
+})
+
 // ── Start ─────────────────────────────────────────────────
+
+server.on('error', (err) => {
+  console.error('[server error]', err)
+  process.exit(1)
+})
 
 server.listen(PORT, () => {
   console.log(`ADS Command Center running at http://localhost:${PORT}`)
