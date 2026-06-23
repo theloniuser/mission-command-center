@@ -6,7 +6,6 @@ export default defineConfig({
   base: '/ads-command-center/',
   server: {
     port: 5173,
-    open: '/ads-command-center/',
     proxy: {
       '/api': {
         target: 'http://localhost:3001',

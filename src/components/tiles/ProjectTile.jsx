@@ -209,7 +209,7 @@ export default function ProjectTile({ project }) {
           const minimized = minimizedPanes.has(terminalId)
           return (
             <div key={terminalId} className={`terminal-pane-wrapper${minimized ? ' terminal-pane-minimized' : ''}`}>
-              <TerminalPane projectPath={project.path} projectId={project.id} terminalId={terminalId} />
+              <TerminalPane projectPath={project.path} projectId={project.id} terminalId={terminalId} launchCommand={project.launch_command} />
               <PaneStatusBar
                 terminalId={terminalId}
                 project={project}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTerminal } from '../../context/TerminalContext.jsx'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 const AGENT_TYPES = ['Claude Code', 'claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5']
@@ -92,6 +93,8 @@ export default function LauncherModal({ isOpen, initialBead, onClose }) {
   const [launching,   setLaunching]   = useState(false)
   const [error,       setError]       = useState(null)
 
+  const { getTerminalIds, openTerminal, addTerminalPane } = useTerminal()
+
   useEffect(() => {
     if (!isOpen) return
     fetch(`${API_BASE}/api/projects`).then(r => r.json()).then(data => {
@@ -104,40 +107,46 @@ export default function LauncherModal({ isOpen, initialBead, onClose }) {
   }, [isOpen, initialBead])
 
   async function handleLaunch() {
-    const launchPath = projectId === BROWSE_ID
-      ? browsedPath
-      : projects.find(p => p.id === projectId)?.path
-    if (!launchPath) return
-    setLaunching(true)
-    setError(null)
-    try {
-      const command = beadTitle
-        ? `claude --context "${beadTitle.replace(/"/g, '\\"')}"`
-        : 'claude'
-      const res = await fetch(`${API_BASE}/api/launch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectPath: launchPath, command }),
-      })
-      if (!res.ok) {
-        const d = await res.json()
-        setError(d.error || 'Launch failed')
-      } else {
-        if (projectId === BROWSE_ID && browsedPath) {
-          await fetch(`${API_BASE}/api/temp-projects`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path: browsedPath }),
-          }).catch(() => {})
-          window.dispatchEvent(new CustomEvent('temp-project-created'))
+    if (projectId === BROWSE_ID) {
+      if (!browsedPath) return
+      setLaunching(true)
+      setError(null)
+      try {
+        const command = beadTitle
+          ? `claude --context "${beadTitle.replace(/"/g, '\\"')}"`
+          : 'claude'
+        const res = await fetch(`${API_BASE}/api/launch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectPath: browsedPath, command }),
+        })
+        if (!res.ok) {
+          const d = await res.json()
+          setError(d.error || 'Launch failed')
+          return
         }
+        await fetch(`${API_BASE}/api/temp-projects`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: browsedPath }),
+        }).catch(() => {})
+        window.dispatchEvent(new CustomEvent('temp-project-created'))
         onClose()
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLaunching(false)
       }
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLaunching(false)
+      return
     }
+
+    const existingPanes = getTerminalIds(projectId)
+    if (existingPanes.length === 0) {
+      openTerminal(projectId)
+    } else {
+      addTerminalPane(projectId)
+    }
+    onClose()
   }
 
   const canLaunch = projectId === BROWSE_ID ? !!browsedPath : !!projectId

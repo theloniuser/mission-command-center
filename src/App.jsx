@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, useLocation } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { BrandProvider } from './context/BrandContext.jsx'
 import { SessionProvider, useSession } from './context/SessionContext.jsx'
@@ -7,16 +7,20 @@ import Header from './components/layout/Header.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Settings from './pages/Settings.jsx'
 import LauncherModal from './components/modals/LauncherModal.jsx'
+
 function AppLayout() {
   const { launcherOpen, launcherBead, closeLauncher } = useSession()
+  const location = useLocation()
+  const isSettings = location.pathname.startsWith('/settings')
 
   return (
     <>
       <Header />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/settings" element={<Settings />} />
-      </Routes>
+      {/* Keep Dashboard mounted so terminal WebSockets survive navigation */}
+      <div style={{ display: isSettings ? 'none' : undefined }}>
+        <Dashboard />
+      </div>
+      {isSettings && <Settings />}
       <LauncherModal isOpen={launcherOpen} initialBead={launcherBead} onClose={closeLauncher} />
     </>
   )

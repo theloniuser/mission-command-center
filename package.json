@@ -4,7 +4,8 @@
   "description": "Local dashboard for Claude Code power users — monitor sessions, manage tasks, and launch terminals from one browser tab",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"vite\"",
+    "dev": "concurrently \"npm run server\" \"vite\" \"npm run dev:open\"",
+    "dev:open": "sleep 2 && open http://localhost:5173/ads-command-center/",
     "server": "node server/index.js",
     "build": "vite build",
     "preview": "vite preview",

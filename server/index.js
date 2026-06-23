@@ -504,6 +504,11 @@ wss.on('connection', (ws) => {
       ptyProcess.onExit(() => {
         if (ws.readyState === ws.OPEN) ws.close()
       })
+      if (msg.launchCommand) {
+        setTimeout(() => {
+          if (ptyProcess) ptyProcess.write(msg.launchCommand + '\r')
+        }, 400)
+      }
     }
 
     if (msg.type === 'input' && ptyProcess) {

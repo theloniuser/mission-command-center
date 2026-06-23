@@ -31,7 +31,7 @@ const LIGHT_THEME = {
   brightCyan: '#339fd9',
 }
 
-export default function TerminalPane({ projectPath, projectId, terminalId: terminalIdProp }) {
+export default function TerminalPane({ projectPath, projectId, terminalId: terminalIdProp, launchCommand }) {
   const terminalId = terminalIdProp ?? projectId
   const containerRef = useRef(null)
   const termRef = useRef(null)
@@ -66,7 +66,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
 
     ws.onopen = () => {
       const { cols, rows } = term
-      ws.send(JSON.stringify({ type: 'init', projectPath, cols, rows }))
+      ws.send(JSON.stringify({ type: 'init', projectPath, launchCommand: launchCommand || '', cols, rows }))
 
       registerTerminal(terminalId, (data) => {
         if (ws.readyState === WebSocket.OPEN) {
