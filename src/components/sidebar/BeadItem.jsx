@@ -37,10 +37,10 @@ export default function BeadItem({ bead, onNewSession, onClosed }) {
       setTimeout(() => setCopied(false), 2000)
     }
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(bead.title).then(markCopied)
+      navigator.clipboard.writeText(`Work on: ${bead.title}`).then(markCopied)
     } else {
       const ta = document.createElement('textarea')
-      ta.value = bead.title
+      ta.value = `Work on: ${bead.title}`
       ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px'
       document.body.appendChild(ta)
       ta.focus()
