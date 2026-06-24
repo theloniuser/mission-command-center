@@ -329,7 +329,7 @@ export default function ProjectTile({ project }) {
             onClick={() => openChangelog(project.id)}
             aria-expanded={showChangelog}
           >
-            Changelog {showChangelog ? '▴' : '▾'}
+            Changelog {showChangelog ? '∧' : '∨'}
           </button>
           {showChangelog && <ChangelogPanel projectId={project.id} />}
         </div>
