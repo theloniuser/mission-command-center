@@ -23,12 +23,22 @@ const LIGHT_THEME = {
   foreground: '#1e1e1e',
   cursor: '#e05a00',
   selectionBackground: 'rgba(255,107,0,0.2)',
-  red: '#e05a00',
-  brightRed: '#ff6b00',
-  blue: '#267bb4',
-  brightBlue: '#339fd9',
-  cyan: '#267bb4',
-  brightCyan: '#339fd9',
+  black: '#2e2e2e',
+  brightBlack: '#555555',
+  red: '#b83200',
+  brightRed: '#c04000',
+  green: '#2d6a00',        // 5.8:1 vs #f8f8f7
+  brightGreen: '#3a7a00',  // 4.8:1 vs #f8f8f7
+  yellow: '#7a5c00',       // 5.5:1 vs #f8f8f7
+  brightYellow: '#8a6800', // 4.8:1 vs #f8f8f7
+  blue: '#1565a0',
+  brightBlue: '#1e71aa',
+  magenta: '#7b1fa2',      // 5.5:1 vs #f8f8f7
+  brightMagenta: '#8e24aa',// 4.7:1 vs #f8f8f7
+  cyan: '#00696e',         // 5.1:1 vs #f8f8f7
+  brightCyan: '#00838a',   // 4.6:1 vs #f8f8f7
+  white: '#3a3a3a',
+  brightWhite: '#1e1e1e',
 }
 
 // eslint-disable-next-line no-control-regex
@@ -36,6 +46,7 @@ const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][AB012]/g
 const RECONNECT_BASE_MS = 750
 const RECONNECT_MAX_MS = 10_000
 const RECONNECT_MAX_ATTEMPTS = 12
+const KEEPALIVE_MS = 25_000
 
 export default function TerminalPane({ projectPath, projectId, terminalId: terminalIdProp, launchCommand }) {
   const terminalId = terminalIdProp ?? projectId
@@ -54,6 +65,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
   useEffect(() => {
     const term = new Terminal({
       cursorBlink: true,
+      copyOnSelect: true,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       fontSize: 13,
       lineHeight: 1.4,
@@ -64,6 +76,15 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     const fitAddon = new FitAddon()
     term.loadAddon(fitAddon)
     term.open(containerRef.current)
+
+    // Ctrl+Shift+V: paste from clipboard (Linux browser convention)
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.type === 'keydown' && e.ctrlKey && e.shiftKey && e.key === 'V') {
+        navigator.clipboard?.readText().then(text => { if (text) term.paste(text) }).catch(() => {})
+        return false
+      }
+      return true
+    })
 
     requestAnimationFrame(() => fitAddon.fit())
 
@@ -77,6 +98,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     let reconnectTimer = null
     let pendingCommandTimer = null
     let reconnectNoticeShown = false
+    let keepaliveTimer = null
 
     function socketIsCurrent(ws, seq) {
       return shouldReconnect && wsRef.current === ws && socketSeq === seq
@@ -86,6 +108,20 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       if (reconnectTimer) {
         clearTimeout(reconnectTimer)
         reconnectTimer = null
+      }
+    }
+
+    function startKeepalive(ws) {
+      stopKeepalive()
+      keepaliveTimer = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) send(ws, { type: 'keepalive' })
+      }, KEEPALIVE_MS)
+    }
+
+    function stopKeepalive() {
+      if (keepaliveTimer) {
+        clearInterval(keepaliveTimer)
+        keepaliveTimer = null
       }
     }
 
@@ -146,6 +182,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
 
         reconnectAttempts = 0
         reconnectNoticeShown = false
+        startKeepalive(ws)
 
         if (!wasFirstConnect) {
           // Clear the terminal before buffer replay so content isn't doubled
@@ -182,6 +219,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       }
 
       ws.onclose = () => {
+        stopKeepalive()
         if (!socketIsCurrent(ws, seq)) return
         wsRef.current = null
         if (!shouldReconnect) return
@@ -235,6 +273,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     return () => {
       shouldReconnect = false  // prevent reconnect on intentional close
       clearReconnectTimer()
+      stopKeepalive()
       clearTimeout(pendingCommandTimer)
       window.removeEventListener('online', onWakeSignal)
       window.removeEventListener('focus', onWakeSignal)

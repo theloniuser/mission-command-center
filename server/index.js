@@ -494,7 +494,7 @@ if (existsSync(distPath)) {
 // and buffered output is replayed — session persists across navigation.
 
 const SESSION_TIMEOUT_MS = 600_000  // 10 min — survives typical sleep/wake cycles
-const WS_HEARTBEAT_MS = 30_000
+
 const BUFFER_MAX = 500
 const ptySessions = new Map() // terminalId → { ptyProcess, buffer, ws, cleanupTimer }
 
@@ -509,11 +509,6 @@ function sendJson(ws, payload, label) {
 
 wss.on('connection', (ws) => {
   let sessionKey = null
-  ws.isAlive = true
-
-  ws.on('pong', () => {
-    ws.isAlive = true
-  })
 
   ws.on('error', (err) => {
     console.error('[ws error]', err.code || err.message)
@@ -587,6 +582,11 @@ wss.on('connection', (ws) => {
       const session = ptySessions.get(sessionKey)
       if (session?.ws === ws && session.ptyProcess) session.ptyProcess.resize(Math.max(1, msg.cols), Math.max(1, msg.rows))
     }
+
+    // Application-level keepalive — echoed back so Cloudflare proxy doesn't idle-timeout
+    if (msg.type === 'keepalive') {
+      sendJson(ws, { type: 'keepalive' }, 'keepalive')
+    }
   })
 
   ws.on('close', () => {
@@ -602,21 +602,6 @@ wss.on('connection', (ws) => {
       if (ptySessions.get(sessionKey) === session) ptySessions.delete(sessionKey)
     }, SESSION_TIMEOUT_MS)
   })
-})
-
-const heartbeat = setInterval(() => {
-  for (const ws of wss.clients) {
-    if (ws.isAlive === false) {
-      ws.terminate()
-      continue
-    }
-    ws.isAlive = false
-    ws.ping()
-  }
-}, WS_HEARTBEAT_MS)
-
-wss.on('close', () => {
-  clearInterval(heartbeat)
 })
 
 // ── Global error guards — prevent unhandled events from crashing the process ──

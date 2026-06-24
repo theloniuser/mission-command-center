@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
@@ -20,12 +20,34 @@ export default function BrainCapture({ inline = false, onCaptured }) {
   const [text, setText]       = useState('')
   const [status, setStatus]   = useState(null) // null | 'sending' | 'ok' | 'error'
   const [dragging, setDragging] = useState(false)
+  const suppressNextChangeRef = useRef(false)
 
   function handleKeyDown(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       submit()
     }
+  }
+
+  function handlePaste(e) {
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault()
+        suppressNextChangeRef.current = true
+        setText(prev => prev ? `${prev}\n[image pasted]` : '[image pasted]')
+        return
+      }
+    }
+  }
+
+  function handleChange(e) {
+    if (suppressNextChangeRef.current) {
+      suppressNextChangeRef.current = false
+      return
+    }
+    setText(e.target.value)
   }
 
   async function handleDrop(e) {
@@ -73,12 +95,13 @@ export default function BrainCapture({ inline = false, onCaptured }) {
           className={`brain-capture-input-inline${dragging ? ' brain-capture-drop-active' : ''}`}
           placeholder="Capture a thought to Brain... (or drop a file)"
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           onDragEnter={(e) => { e.preventDefault(); setDragging(true) }}
           onDragOver={(e) => e.preventDefault()}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
+          onPaste={handlePaste}
           disabled={status === 'sending'}
         />
         {status === 'error' && <span className="brain-capture-err">Failed</span>}
@@ -97,12 +120,13 @@ export default function BrainCapture({ inline = false, onCaptured }) {
         className={`brain-capture-input${dragging ? ' brain-capture-drop-active' : ''}`}
         placeholder="Capture a thought to Brain... (or drop a file)"
         value={text}
-        onChange={e => setText(e.target.value)}
+        onChange={handleChange}
         onKeyDown={handleKeyDown}
         onDragEnter={(e) => { e.preventDefault(); setDragging(true) }}
         onDragOver={(e) => e.preventDefault()}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
+        onPaste={handlePaste}
         rows={2}
         disabled={status === 'sending'}
       />
