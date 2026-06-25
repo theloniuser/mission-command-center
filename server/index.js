@@ -582,6 +582,10 @@ function restoreSessions() {
     ptySessions.set(entry.terminalId, session)
     const key = entry.terminalId
 
+    if (entry.launchCommand) {
+      setTimeout(() => { ptyProcess.write(entry.launchCommand + '\r') }, 400)
+    }
+
     ptyProcess.onData(data => {
       session.buffer.push(data)
       if (session.buffer.length > BUFFER_MAX) session.buffer.shift()
