@@ -23,8 +23,8 @@ const LIGHT_THEME = {
   foreground: '#1e1e1e',
   cursor: '#e05a00',
   selectionBackground: 'rgba(255,107,0,0.2)',
-  black: '#2e2e2e',
-  brightBlack: '#555555',
+  black: '#e0e0e0',
+  brightBlack: '#cccccc',
   red: '#b83200',
   brightRed: '#c04000',
   green: '#2d6a00',        // 5.8:1 vs #f8f8f7
@@ -59,6 +59,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
   useEffect(() => {
     if (termRef.current) {
       termRef.current.options.theme = theme === 'dark' ? DARK_THEME : LIGHT_THEME
+      termRef.current.options.minimumContrastRatio = theme === 'dark' ? 1 : 4.5
     }
   }, [theme])
 
@@ -70,6 +71,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       fontSize: 13,
       lineHeight: 1.4,
       theme: theme === 'dark' ? DARK_THEME : LIGHT_THEME,
+      minimumContrastRatio: theme === 'dark' ? 1 : 4.5,
     })
     termRef.current = term
 
