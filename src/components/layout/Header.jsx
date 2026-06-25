@@ -79,10 +79,6 @@ export default function Header() {
           <span className="summary-stat">
             <strong>{stats?.mcps_engaged ?? '—'}</strong> MCPs engaged
           </span>
-          <span className="summary-divider" />
-          <span className="summary-stat">
-            <strong>${stats?.spend_today ?? '—'}</strong> today
-          </span>
         </div>
         <BrainCapture inline />
       </div>
