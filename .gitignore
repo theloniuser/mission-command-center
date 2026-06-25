@@ -3,6 +3,7 @@ dist/
 config/settings.json
 config/tasks.json
 config/notes.md
+config/sessions.json
 hetzner/
 changes.*.md
 _build_plan/

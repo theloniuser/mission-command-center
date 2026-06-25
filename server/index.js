@@ -5,7 +5,7 @@ import pty from 'node-pty'
 import os from 'os'
 import cors from 'cors'
 import { randomUUID } from 'crypto'
-import { exec } from 'child_process'
+import { exec, execSync } from 'child_process'
 import { promisify } from 'util'
 import { readFileSync, writeFileSync, appendFileSync, existsSync, createReadStream } from 'fs'
 import { readdir, mkdir } from 'fs/promises'
@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url'
 const execAsync = promisify(exec)
 const _serverDir = _dirOf(fileURLToPath(import.meta.url))
 const CONFIG_DIR = resolve(_serverDir, '../config')
+const SESSIONS_FILE = join(CONFIG_DIR, 'sessions.json')
 import { readConfig, writeConfig } from './configManager.js'
 import { scanAllSessions } from './sessionScanner.js'
 import { scanBeads } from './beadsScanner.js'
@@ -518,6 +519,86 @@ const ptySessions = new Map() // terminalId → { ptyProcess, buffer, ws, cleanu
 
 const wss = new WebSocketServer({ server, path: '/terminal' })
 
+// ── Session persistence ───────────────────────────────────
+// Checkpoint sessions to disk so a crash/restart doesn't wipe terminal state.
+// On restart, restoreSessions() re-spawns PTYs in the saved cwd and pre-fills
+// the buffer — clients that reconnect get their scrollback and a live shell.
+
+function persistSessions() {
+  const entries = []
+  for (const [key, session] of ptySessions.entries()) {
+    if (!session.ptyProcess) continue
+    entries.push({
+      terminalId: key,
+      projectPath: session.projectPath || '',
+      cwd: session.cwd || os.homedir(),
+      buffer: session.buffer.slice(-200),
+      launchCommand: session.launchCommand || null,
+    })
+  }
+  try {
+    writeFileSync(SESSIONS_FILE, JSON.stringify(entries, null, 2))
+  } catch (err) {
+    console.error('[persist] sessions write failed:', err.message)
+  }
+}
+
+function restoreSessions() {
+  if (!existsSync(SESSIONS_FILE)) return
+  let entries
+  try {
+    entries = JSON.parse(readFileSync(SESSIONS_FILE, 'utf8'))
+    if (!Array.isArray(entries) || !entries.length) return
+  } catch { return }
+
+  console.log(`[restore] restoring ${entries.length} session(s)`)
+  for (const entry of entries) {
+    if (!entry.terminalId) continue
+    const rawCwd = (entry.cwd || entry.projectPath || '').replace(/^~/, os.homedir())
+    const cwd = rawCwd && existsSync(rawCwd) ? rawCwd : os.homedir()
+
+    const ptyProcess = pty.spawn('/bin/zsh', [], {
+      name: 'xterm-color',
+      cols: 220,
+      rows: 50,
+      cwd,
+      env: { ...process.env, TERM: 'xterm-256color' },
+    })
+
+    const session = {
+      ptyProcess,
+      buffer: Array.isArray(entry.buffer) ? entry.buffer : [],
+      ws: null,
+      cleanupTimer: null,
+      projectPath: entry.projectPath || '',
+      cwd,
+      launchCommand: entry.launchCommand || null,
+    }
+    ptySessions.set(entry.terminalId, session)
+    const key = entry.terminalId
+
+    ptyProcess.onData(data => {
+      session.buffer.push(data)
+      if (session.buffer.length > BUFFER_MAX) session.buffer.shift()
+      sendJson(session.ws, { type: 'output', data }, 'ws send error')
+    })
+
+    ptyProcess.onExit(() => {
+      clearTimeout(session.cleanupTimer)
+      if (ptySessions.get(key) === session) ptySessions.delete(key)
+      persistSessions()
+      if (session.ws?.readyState === WebSocket.OPEN) session.ws.close()
+    })
+
+    // Kill after timeout if no client reconnects
+    session.cleanupTimer = setTimeout(() => {
+      session.ptyProcess?.kill()
+      if (ptySessions.get(key) === session) ptySessions.delete(key)
+      persistSessions()
+    }, SESSION_TIMEOUT_MS)
+  }
+}
+
 function sendJson(ws, payload, label) {
   if (ws?.readyState !== WebSocket.OPEN) return
   ws.send(JSON.stringify(payload), (err) => {
@@ -571,8 +652,12 @@ wss.on('connection', (ws) => {
         env: { ...process.env, TERM: 'xterm-256color' },
       })
 
-      const session = { ptyProcess, buffer: [], ws, cleanupTimer: null }
+      const session = {
+        ptyProcess, buffer: [], ws, cleanupTimer: null,
+        projectPath: rawCwd, cwd, launchCommand: msg.launchCommand || null,
+      }
       ptySessions.set(sessionKey, session)
+      persistSessions()
       const key = sessionKey
 
       ptyProcess.onData(data => {
@@ -584,6 +669,7 @@ wss.on('connection', (ws) => {
       ptyProcess.onExit(() => {
         clearTimeout(session.cleanupTimer)
         if (ptySessions.get(key) === session) ptySessions.delete(key)
+        persistSessions()
         if (session.ws?.readyState === WebSocket.OPEN) session.ws.close()
       })
 
@@ -615,10 +701,12 @@ wss.on('connection', (ws) => {
     if (session.ws !== ws) return
     session.ws = null
     clearTimeout(session.cleanupTimer)
+    persistSessions()  // checkpoint buffer — server may restart during grace period
     // Keep PTY alive; kill after timeout if no reconnect
     session.cleanupTimer = setTimeout(() => {
       session.ptyProcess?.kill()
       if (ptySessions.get(sessionKey) === session) ptySessions.delete(sessionKey)
+      persistSessions()
     }, SESSION_TIMEOUT_MS)
   })
 })
@@ -641,18 +729,25 @@ wss.on('error', (err) => {
 
 // ── Start ─────────────────────────────────────────────────
 
-let _bindRetries = 0
+let _bindAttempted = false
 server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE' && _bindRetries < 5) {
-    _bindRetries++
-    console.error(`[server error] port ${PORT} in use — retry ${_bindRetries}/5 in 3s`)
-    setTimeout(() => server.listen(PORT), 3000)
+  if (err.code === 'EADDRINUSE' && !_bindAttempted) {
+    _bindAttempted = true
+    console.log(`[server] port ${PORT} in use — killing stale process and retrying`)
+    try { execSync(`lsof -ti:${PORT} | xargs kill -9 2>/dev/null || true`, { stdio: 'ignore' }) } catch {}
+    setTimeout(() => server.listen(PORT), 500)
   } else {
     console.error('[server error]', err)
     process.exit(1)
   }
 })
 
+process.on('SIGTERM', () => {
+  persistSessions()
+  process.exit(0)
+})
+
+restoreSessions()
 server.listen(PORT, () => {
   console.log(`ADS Command Center running at http://localhost:${PORT}`)
 })
