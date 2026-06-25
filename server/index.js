@@ -7,7 +7,7 @@ import cors from 'cors'
 import { randomUUID } from 'crypto'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import { readFileSync, appendFileSync, existsSync, createReadStream } from 'fs'
+import { readFileSync, writeFileSync, appendFileSync, existsSync, createReadStream } from 'fs'
 import { readdir, mkdir } from 'fs/promises'
 import { extname, resolve, join, dirname as _dirOf } from 'path'
 import { fileURLToPath } from 'url'
@@ -225,6 +225,21 @@ app.post('/api/beads/close', async (req, res) => {
       await execAsync(`bd close "${id.trim()}"`, {
         env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
       })
+      // Patch backlog.json so next fetch reflects the close immediately
+      try {
+        const settings = readConfig('settings.json')
+        const rawPath = settings?.backlogPath?.trim()
+        if (rawPath) {
+          const backlogPath = rawPath.replace(/^~/, os.homedir())
+          if (existsSync(backlogPath)) {
+            const data = JSON.parse(readFileSync(backlogPath, 'utf8'))
+            if (Array.isArray(data.backlog)) {
+              data.backlog = data.backlog.filter(b => b.id !== id.trim())
+              writeFileSync(backlogPath, JSON.stringify(data, null, 2))
+            }
+          }
+        }
+      } catch { /* non-fatal */ }
       return res.json({ ok: true })
     } catch (err) {
       return res.status(500).json({ error: err.message })
@@ -611,8 +626,9 @@ wss.on('connection', (ws) => {
 // ── Global error guards — prevent unhandled events from crashing the process ──
 
 process.on('uncaughtException', (err) => {
+  // Log but don't exit — crashing loses all ptySessions / terminal contexts.
+  // Only exit for truly unrecoverable errors (port bind failure handled below).
   console.error('[uncaughtException]', err)
-  process.exit(1)
 })
 
 process.on('unhandledRejection', (reason) => {
@@ -626,8 +642,15 @@ wss.on('error', (err) => {
 // ── Start ─────────────────────────────────────────────────
 
 server.on('error', (err) => {
-  console.error('[server error]', err)
-  process.exit(1)
+  if (err.code === 'EADDRINUSE') {
+    // Port still bound after restart — wait 3s and retry rather than exiting
+    // immediately (which triggers launchd KeepAlive loop and 34k error entries).
+    console.error(`[server error] port ${PORT} in use — retrying in 3s`)
+    setTimeout(() => server.listen(PORT), 3000)
+  } else {
+    console.error('[server error]', err)
+    process.exit(1)
+  }
 })
 
 server.listen(PORT, () => {
