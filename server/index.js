@@ -7,7 +7,7 @@ import cors from 'cors'
 import { randomUUID } from 'crypto'
 import { exec, execSync } from 'child_process'
 import { promisify } from 'util'
-import { readFileSync, writeFileSync, appendFileSync, existsSync, createReadStream } from 'fs'
+import { readFileSync, writeFileSync, renameSync, unlinkSync, appendFileSync, existsSync, createReadStream } from 'fs'
 import { readdir, mkdir } from 'fs/promises'
 import { extname, resolve, join, dirname as _dirOf } from 'path'
 import { fileURLToPath } from 'url'
@@ -536,14 +536,19 @@ function persistSessions() {
       launchCommand: session.launchCommand || null,
     })
   }
+  const tmp = SESSIONS_FILE + '.tmp'
   try {
-    writeFileSync(SESSIONS_FILE, JSON.stringify(entries, null, 2))
+    writeFileSync(tmp, JSON.stringify(entries, null, 2))
+    renameSync(tmp, SESSIONS_FILE)  // atomic on POSIX — SIGKILL mid-write leaves old file intact
   } catch (err) {
     console.error('[persist] sessions write failed:', err.message)
   }
 }
 
 function restoreSessions() {
+  // Clean up any leftover .tmp from a crash between writeFileSync and renameSync
+  const tmp = SESSIONS_FILE + '.tmp'
+  if (existsSync(tmp)) try { unlinkSync(tmp) } catch {}
   if (!existsSync(SESSIONS_FILE)) return
   let entries
   try {
@@ -598,6 +603,29 @@ function restoreSessions() {
     }, SESSION_TIMEOUT_MS)
   }
 }
+
+// Reads the actual cwd of a running PTY process via lsof (macOS/Linux).
+// Called before each persist so restored sessions land in the right directory.
+async function updateCwds() {
+  for (const session of ptySessions.values()) {
+    if (!session.ptyProcess?.pid) continue
+    try {
+      const { stdout } = await execAsync(
+        `lsof -p ${session.ptyProcess.pid} -a -d cwd -Fn 2>/dev/null | grep '^n' | head -1`,
+        { env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` } }
+      )
+      const cwd = stdout.trim().slice(1)  // strip leading 'n' from lsof -Fn output
+      if (cwd) session.cwd = cwd
+    } catch {}
+  }
+}
+
+// Periodic background flush — protects against SIGKILL between WS events.
+setInterval(async () => {
+  if (!ptySessions.size) return
+  await updateCwds()
+  persistSessions()
+}, 30_000).unref()
 
 function sendJson(ws, payload, label) {
   if (ws?.readyState !== WebSocket.OPEN) return
@@ -714,9 +742,9 @@ wss.on('connection', (ws) => {
 // ── Global error guards — prevent unhandled events from crashing the process ──
 
 process.on('uncaughtException', (err) => {
-  // Log but don't exit — crashing loses all ptySessions / terminal contexts.
-  // Only exit for truly unrecoverable errors (port bind failure handled below).
   console.error('[uncaughtException]', err)
+  try { persistSessions() } catch {}
+  process.exit(1)  // sessions persisted to disk; launchd restarts cleanly
 })
 
 process.on('unhandledRejection', (reason) => {
@@ -742,10 +770,12 @@ server.on('error', (err) => {
   }
 })
 
-process.on('SIGTERM', () => {
+function onShutdown() {
   persistSessions()
   process.exit(0)
-})
+}
+process.on('SIGTERM', onShutdown)
+process.on('SIGINT', onShutdown)
 
 restoreSessions()
 server.listen(PORT, () => {
