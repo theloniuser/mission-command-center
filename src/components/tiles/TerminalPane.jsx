@@ -244,8 +244,13 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
         scheduleReconnect('error')
       }
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         stopKeepalive()
+        if (event?.code === 4000) {
+          // Superseded by another tab or concurrent connection — don't compete
+          wsRef.current = null
+          return
+        }
         if (!socketIsCurrent(ws, seq)) return
         wsRef.current = null
         if (!shouldReconnect) return

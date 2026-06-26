@@ -507,6 +507,21 @@ if (existsSync(distPath)) {
   app.get('/', (req, res) => res.redirect('/ads-command-center/'))
 }
 
+// ── Terminal session kill ─────────────────────────────────
+
+app.delete('/api/terminal/:terminalId', (req, res) => {
+  const key = decodeURIComponent(req.params.terminalId)
+  const session = ptySessions.get(key)
+  if (!session) return res.status(404).json({ error: 'session not found' })
+  clearTimeout(session.cleanupTimer)
+  session.buffer = []  // clear replayed output so next open is clean
+  if (session.ws?.readyState === WebSocket.OPEN) session.ws.close(4001, 'killed by user')
+  session.ptyProcess?.kill()
+  ptySessions.delete(key)
+  persistSessions()
+  res.json({ ok: true })
+})
+
 // ── WebSocket + PTY ───────────────────────────────────────
 // PTY sessions survive WebSocket disconnects for SESSION_TIMEOUT_MS.
 // On reconnect with the same terminalId, the existing PTY is reattached
@@ -678,8 +693,8 @@ wss.on('connection', (ws) => {
       const cwd = rawCwd && existsSync(rawCwd) ? rawCwd : os.homedir()
       const ptyProcess = pty.spawn('/bin/zsh', [], {
         name: 'xterm-color',
-        cols: msg.cols || 80,
-        rows: msg.rows || 24,
+        cols: Math.max(1, msg.cols || 80),
+        rows: Math.max(1, msg.rows || 24),
         cwd,
         env: { ...process.env, TERM: 'xterm-256color' },
       })
@@ -698,7 +713,7 @@ wss.on('connection', (ws) => {
         sendJson(session.ws, { type: 'output', data }, 'ws send error')
       })
 
-      ptyProcess.onExit(() => {
+      ptyProcess.onExit(({ exitCode }) => {
         clearTimeout(session.cleanupTimer)
         if (ptySessions.get(key) === session) ptySessions.delete(key)
         persistSessions()

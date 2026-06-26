@@ -216,7 +216,10 @@ export default function ProjectTile({ project }) {
                 terminalId={terminalId}
                 project={project}
                 onAddPane={() => addTerminalPane(project.id)}
-                onClose={() => closeTerminalPane(terminalId)}
+                onClose={async () => {
+                  try { await fetch(`/api/terminal/${encodeURIComponent(terminalId)}`, { method: 'DELETE' }) } catch {}
+                  closeTerminalPane(terminalId)
+                }}
                 isMinimized={minimized}
                 onToggleMinimize={() => toggleMinimize(terminalId)}
               />
