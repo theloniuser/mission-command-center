@@ -134,10 +134,27 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       }
     }
 
+    async function checkAccessBlocked() {
+      try {
+        const r = await fetch('/api/ping', { method: 'GET', cache: 'no-store' })
+        const data = await r.json()
+        return data?.ok !== true  // if JSON parse fails or ok!=true, Access redirected us to login page
+      } catch {
+        return true  // couldn't parse JSON — Access redirect served HTML login page
+      }
+    }
+
     function scheduleReconnect(reason = 'closed') {
       if (!shouldReconnect || reconnectTimer) return
       if (reconnectAttempts >= RECONNECT_MAX_ATTEMPTS) {
-        term.write(`\r\n\x1b[31m[Connection unavailable after ${RECONNECT_MAX_ATTEMPTS} attempts. Reconnect will retry when the browser wakes or comes online.]\x1b[0m\r\n`)
+        // Check if server is accessible via HTTP but WebSocket is blocked (Access session expired)
+        checkAccessBlocked().then(blocked => {
+          if (blocked) {
+            term.write(`\r\n\x1b[31m[Session expired — reload the page to reconnect]\x1b[0m\r\n`)
+          } else {
+            term.write(`\r\n\x1b[31m[Connection unavailable after ${RECONNECT_MAX_ATTEMPTS} attempts. Reconnect will retry when the browser wakes or comes online.]\x1b[0m\r\n`)
+          }
+        })
         return
       }
 

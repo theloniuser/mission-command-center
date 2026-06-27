@@ -67,6 +67,9 @@ const TILE_COLORS = [
 app.use(cors())
 app.use(express.json())
 
+// Health check — lets the client distinguish "Access blocked" from "server down"
+app.get('/api/ping', (req, res) => res.json({ ok: true }))
+
 // Tracks items promoted to backlog — filters them from /api/brain-items until
 // generate-backlog.sh catches up and removes them from backlog.json
 const recentlyPromoted = new Map() // text -> timestamp (10-min TTL)
@@ -543,7 +546,8 @@ wss.on('connection', (ws) => {
       }
 
       // New session — spawn PTY
-      const cwd = (msg.projectPath || os.homedir()).replace(/^~/, os.homedir())
+      const rawCwd = (msg.projectPath || '').replace(/^~/, os.homedir())
+      const cwd = rawCwd && existsSync(rawCwd) ? rawCwd : os.homedir()
       const ptyProcess = pty.spawn('/bin/zsh', [], {
         name: 'xterm-color',
         cols: msg.cols || 80,
