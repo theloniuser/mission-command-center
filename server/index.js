@@ -53,7 +53,7 @@ function localTasksAsGroups() {
 
 const app = express()
 const server = http.createServer(app)
-const PORT = 3001
+const PORT = process.env.PORT || 3002
 
 const TILE_COLORS = [
   '#ff7f00',
