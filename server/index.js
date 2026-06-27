@@ -18,7 +18,7 @@ const CONFIG_DIR = resolve(_serverDir, '../config')
 const SESSIONS_FILE = join(CONFIG_DIR, 'sessions.json')
 import { readConfig, writeConfig } from './configManager.js'
 import { scanAllSessions } from './sessionScanner.js'
-import { scanBeads } from './beadsScanner.js'
+
 import { launchTerminal } from './terminalLauncher.js'
 import { scanChangelogs } from './changelogScanner.js'
 
@@ -26,30 +26,6 @@ function readEnvKey(keyName) {
   return process.env[keyName] || null
 }
 
-// ── Local task fallback (used when bd CLI is not installed) ─
-
-let _bdAvailable = null
-async function isBdAvailable() {
-  if (_bdAvailable !== null) return _bdAvailable
-  try {
-    await execAsync('which bd', { env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` } })
-    _bdAvailable = true
-  } catch {
-    _bdAvailable = false
-  }
-  return _bdAvailable
-}
-
-function shortId() {
-  return Math.random().toString(36).slice(2, 5)
-}
-
-function localTasksAsGroups() {
-  const tasks = readConfig('tasks.json') || []
-  const open = tasks.filter(t => t.status === 'open')
-  if (!open.length) return { groups: [] }
-  return { groups: [{ project: 'Local', beads: open }] }
-}
 
 const app = express()
 const server = http.createServer(app)
@@ -70,10 +46,6 @@ app.use(express.json())
 
 // Health check — lets the client distinguish "Access blocked" from "server down"
 app.get('/api/ping', (req, res) => res.json({ ok: true }))
-
-// Tracks items promoted to backlog — filters them from /api/brain-items until
-// generate-backlog.sh catches up and removes them from backlog.json
-const recentlyPromoted = new Map() // text -> timestamp (10-min TTL)
 
 // ── Projects ──────────────────────────────────────────────
 
@@ -113,6 +85,29 @@ app.delete('/api/projects/:id', (req, res) => {
   res.status(204).end()
 })
 
+// ── Tasks ─────────────────────────────────────────────────
+
+app.get('/api/tasks', (req, res) => {
+  const tasks = readConfig('tasks.json') || []
+  res.json(tasks.filter(t => t.status !== 'closed'))
+})
+
+app.post('/api/tasks', (req, res) => {
+  const { title } = req.body
+  if (!title?.trim()) return res.status(400).json({ error: 'title required' })
+  const tasks = readConfig('tasks.json') || []
+  const task = { id: randomUUID(), title: title.trim(), status: 'open', created_at: new Date().toISOString() }
+  tasks.unshift(task)
+  writeConfig('tasks.json', tasks)
+  res.status(201).json(task)
+})
+
+app.delete('/api/tasks/:id', (req, res) => {
+  const tasks = readConfig('tasks.json') || []
+  writeConfig('tasks.json', tasks.filter(t => t.id !== req.params.id))
+  res.status(204).end()
+})
+
 // ── Sessions ──────────────────────────────────────────────
 
 app.get('/api/sessions', (req, res) => {
@@ -123,40 +118,6 @@ app.get('/api/sessions', (req, res) => {
   } catch (err) {
     console.error('sessionScanner error:', err)
     res.status(500).json({ error: 'Session scan failed', sessions: [], summary: {} })
-  }
-})
-
-// ── Brain items ───────────────────────────────────────────
-
-app.get('/api/brain-items', (req, res) => {
-  try {
-    const settings = readConfig('settings.json')
-    const rawPath = settings.backlogPath?.trim()
-    if (!rawPath) return res.json({ for_claude: [], to_do: [] })
-    const backlogPath = rawPath.replace(/^~/, os.homedir())
-    if (!existsSync(backlogPath)) return res.json({ for_claude: [], to_do: [] })
-    const data = JSON.parse(readFileSync(backlogPath, 'utf8'))
-    const brain = data.brain || { for_claude: [], to_do: [] }
-
-    // Prune expired entries
-    const now = Date.now()
-    const TTL = 10 * 60 * 1000
-    for (const [k, ts] of recentlyPromoted.entries()) {
-      if (now - ts > TTL) recentlyPromoted.delete(k)
-    }
-
-    const filterOut = items => items.filter(item => {
-      const text = typeof item === 'string' ? item : (item.body || item.text || '')
-      return !recentlyPromoted.has(text.trim())
-    })
-
-    res.json({
-      ...brain,
-      for_claude: filterOut(brain.for_claude || []),
-      to_do:      filterOut(brain.to_do      || []),
-    })
-  } catch {
-    res.json({ for_claude: [], to_do: [] })
   }
 })
 
@@ -202,140 +163,6 @@ app.post('/api/temp-projects/:id/promote', (req, res) => {
   res.status(201).json(promoted)
 })
 
-// ── Beads ─────────────────────────────────────────────────
-
-app.get('/api/beads', async (req, res) => {
-  if (await isBdAvailable()) {
-    try {
-      res.json(await scanBeads())
-    } catch (err) {
-      console.error('beadsScanner error:', err)
-      res.json({ groups: [] })
-    }
-  } else {
-    res.json(localTasksAsGroups())
-  }
-})
-
-app.post('/api/beads/close', async (req, res) => {
-  const { id } = req.body
-  if (!id?.trim()) return res.status(400).json({ error: 'id required' })
-
-  if (await isBdAvailable()) {
-    try {
-      await execAsync(`bd close "${id.trim()}"`, {
-        env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
-      })
-      // Patch backlog.json so next fetch reflects the close immediately
-      try {
-        const settings = readConfig('settings.json')
-        const rawPath = settings?.backlogPath?.trim()
-        if (rawPath) {
-          const backlogPath = rawPath.replace(/^~/, os.homedir())
-          if (existsSync(backlogPath)) {
-            const data = JSON.parse(readFileSync(backlogPath, 'utf8'))
-            if (Array.isArray(data.backlog)) {
-              data.backlog = data.backlog.filter(b => b.id !== id.trim())
-              writeFileSync(backlogPath, JSON.stringify(data, null, 2))
-            }
-          }
-        }
-      } catch { /* non-fatal */ }
-      return res.json({ ok: true })
-    } catch (err) {
-      return res.status(500).json({ error: err.message })
-    }
-  }
-
-  // local fallback
-  const tasks = readConfig('tasks.json') || []
-  const idx = tasks.findIndex(t => t.id === id.trim())
-  if (idx === -1) return res.status(404).json({ error: 'task not found' })
-  tasks[idx] = { ...tasks[idx], status: 'closed' }
-  writeConfig('tasks.json', tasks)
-  res.json({ ok: true })
-})
-
-app.post('/api/beads/new', async (req, res) => {
-  const { title } = req.body
-  if (!title?.trim()) return res.status(400).json({ error: 'title required' })
-
-  if (await isBdAvailable()) {
-    try {
-      const safe = title.trim().replace(/"/g, '\\"')
-      await execAsync(`bd q "${safe}"`, {
-        env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
-      })
-      return res.json({ ok: true })
-    } catch (err) {
-      return res.status(500).json({ error: err.message })
-    }
-  }
-
-  // local fallback
-  const tasks = readConfig('tasks.json') || []
-  tasks.unshift({ id: shortId(), title: title.trim(), priority: 2, status: 'open', created_at: new Date().toISOString() })
-  writeConfig('tasks.json', tasks)
-  res.json({ ok: true })
-})
-
-// ── Promote brain item → beads backlog ───────────────────
-// Creates a bead and marks the brain item RESOLVED in one shot.
-
-app.post('/api/promote-to-backlog', async (req, res) => {
-  const { title, prefix } = req.body  // prefix = 'To do:' | 'For Claude:'
-  if (!title?.trim()) return res.status(400).json({ error: 'title required' })
-
-  const settings = readConfig('settings.json')
-  const endpointUrl = settings.customAction?.endpoint_url
-  const keyVar      = settings.customAction?.api_key_env_var || 'BRAIN_API_KEY'
-  const apiKey      = readEnvKey(keyVar)
-
-  const errors = []
-
-  // 1. Create task (beads if available, local fallback otherwise)
-  if (await isBdAvailable()) {
-    try {
-      const safe = title.trim().replace(/"/g, '\\"')
-      await execAsync(`bd q "${safe}"`, {
-        env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
-      })
-    } catch (err) {
-      errors.push(`bd add failed: ${err.message}`)
-    }
-  } else {
-    const tasks = readConfig('tasks.json') || []
-    tasks.unshift({ id: shortId(), title: title.trim(), priority: 2, status: 'open', created_at: new Date().toISOString() })
-    writeConfig('tasks.json', tasks)
-  }
-
-  // 2. Capture RESOLVED to brain
-  if (endpointUrl && apiKey) {
-    const resolvedText = `RESOLVED: ${prefix} ${title}`.trim()
-    try {
-      await fetch(endpointUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
-        body: JSON.stringify({ text: resolvedText }),
-      })
-    } catch (err) {
-      errors.push(`brain capture failed: ${err.message}`)
-    }
-  }
-
-  // 3. Regenerate backlog in background
-  const scriptPath = resolve(_serverDir, '../../scripts/generate-backlog.sh')
-  if (existsSync(scriptPath)) {
-    execAsync(`bash "${scriptPath}"`, {
-      env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
-    }).catch(() => {})
-  }
-
-  if (errors.length) return res.status(207).json({ ok: false, errors })
-  recentlyPromoted.set(title.trim(), Date.now())
-  res.json({ ok: true })
-})
-
 // ── Launch ────────────────────────────────────────────────
 
 app.post('/api/launch', async (req, res) => {
@@ -346,49 +173,6 @@ app.post('/api/launch', async (req, res) => {
     res.json({ ok: true })
   } catch (err) {
     console.error('launch error:', err)
-    res.status(500).json({ error: err.message })
-  }
-})
-
-// ── Brain Capture ─────────────────────────────────────────
-
-app.post('/api/brain-capture', async (req, res) => {
-  const { text } = req.body
-  if (!text) return res.status(400).json({ error: 'text required' })
-
-  const settings    = readConfig('settings.json')
-  const endpointUrl = settings.customAction?.endpoint_url?.trim()
-  const keyVar      = settings.customAction?.api_key_env_var || 'CAPTURE_API_KEY'
-
-  // Local fallback: append to config/notes.md when no endpoint is configured
-  if (!endpointUrl) {
-    const line = `${new Date().toISOString().slice(0, 10)} ${text}\n`
-    appendFileSync(join(CONFIG_DIR, 'notes.md'), line)
-    return res.json({ ok: true, local: true })
-  }
-
-  const apiKey = readEnvKey(keyVar)
-  if (!apiKey) return res.status(400).json({ error: `${keyVar} not set in environment` })
-
-  try {
-    const response = await fetch(endpointUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
-      body: JSON.stringify({ text }),
-    })
-    const data = await response.json().catch(() => ({}))
-    if (!response.ok) return res.status(502).json({ error: 'Brain API error', status: response.status, data })
-
-    // Regenerate backlog.json in background so sidebar updates immediately
-    const scriptPath = resolve(_serverDir, '../../scripts/generate-backlog.sh')
-    if (existsSync(scriptPath)) {
-      execAsync(`bash "${scriptPath}"`, {
-        env: { ...process.env, PATH: `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}` },
-      }).catch(() => {})
-    }
-
-    res.json({ ok: true, data })
-  } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
@@ -498,13 +282,13 @@ app.put('/api/settings', (req, res) => {
 const distPath = resolve(_serverDir, '../dist')
 
 if (existsSync(distPath)) {
-  app.use('/ads-command-center', express.static(distPath))
-  app.get('/ads-command-center/*', (req, res) => {
+  app.use('/mission-command-center', express.static(distPath))
+  app.get('/mission-command-center/*', (req, res) => {
     const idx = resolve(distPath, 'index.html')
     if (existsSync(idx)) res.sendFile(idx)
     else res.status(404).end()
   })
-  app.get('/', (req, res) => res.redirect('/ads-command-center/'))
+  app.get('/', (req, res) => res.redirect('/mission-command-center/'))
 }
 
 // ── Terminal session kill ─────────────────────────────────
@@ -798,5 +582,5 @@ process.on('SIGINT', onShutdown)
 
 restoreSessions()
 server.listen(PORT, () => {
-  console.log(`ADS Command Center running at http://localhost:${PORT}`)
+  console.log(`Mission Command Center running at http://localhost:${PORT}`)
 })

@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext.jsx'
 import { useSession } from '../../context/SessionContext.jsx'
 import { useBrand } from '../../context/BrandContext.jsx'
-import BrainCapture from '../sidebar/BrainCapture.jsx'
 
 function Logo({ theme, brandMode, brandConfig }) {
   if (brandMode === 'ADS') {
@@ -80,7 +79,6 @@ export default function Header() {
             <strong>{stats?.mcps_engaged ?? '—'}</strong> MCPs engaged
           </span>
         </div>
-        <BrainCapture inline />
       </div>
     </header>
   )

@@ -1,18 +1,66 @@
-import { useRef, useState } from 'react'
-import BeadsPanel from '../sidebar/BeadsPanel.jsx'
-import BrainItemsPanel from '../sidebar/BrainItemsPanel.jsx'
+import { useRef, useState, useEffect } from 'react'
 import ScriptsPanel from '../sidebar/ScriptsPanel.jsx'
 
 const MIN_WIDTH = 200
 const MAX_WIDTH = 600
 const DEFAULT_WIDTH = 280
 
+function TasksPanel() {
+  const [tasks, setTasks] = useState([])
+  const [input, setInput] = useState('')
+
+  useEffect(() => {
+    fetch('/api/tasks').then(r => r.json()).then(setTasks).catch(() => {})
+  }, [])
+
+  function addTask(e) {
+    e.preventDefault()
+    const title = input.trim()
+    if (!title) return
+    fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    })
+      .then(r => r.json())
+      .then(task => { setTasks(prev => [task, ...prev]); setInput('') })
+      .catch(() => {})
+  }
+
+  function closeTask(id) {
+    setTasks(prev => prev.filter(t => t.id !== id))
+    fetch(`/api/tasks/${id}`, { method: 'DELETE' }).catch(() => {})
+  }
+
+  return (
+    <div className="panel tasks-panel">
+      <form className="task-add-form" onSubmit={addTask}>
+        <input
+          className="task-add-input"
+          placeholder="Add a to-do..."
+          value={input}
+          onChange={e => setInput(e.target.value)}
+        />
+        <button type="submit" className="task-add-btn">+</button>
+      </form>
+      {tasks.length === 0 ? (
+        <div className="panel-empty">No open tasks</div>
+      ) : (
+        <ul className="task-list">
+          {tasks.map(t => (
+            <li key={t.id} className="task-item">
+              <span className="task-title">{t.title}</span>
+              <button className="task-close" onClick={() => closeTask(t.id)} aria-label="Close task">×</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 export default function Sidebar({ onNewSession }) {
   const [collapsed, setCollapsed] = useState(false)
-  const [refreshTick, setRefreshTick] = useState(0)
-  const [spinning, setSpinning] = useState(false)
-  const spinStart = useRef(0)
-  const SPIN_MIN = 700
   const [width, setWidth] = useState(DEFAULT_WIDTH)
   const dragging = useRef(false)
   const startX = useRef(0)
@@ -45,20 +93,9 @@ export default function Sidebar({ onNewSession }) {
         <div className="sidebar-drag-handle" onMouseDown={onDragStart} />
         <div className="sidebar-inner">
           <div className="sidebar-header">
-            <span className="sidebar-title">Backlog</span>
-            <div className="sidebar-header-actions">
-              <button className="bead-btn beads-refresh" onClick={() => { setRefreshTick(t => t + 1); setSpinning(true); spinStart.current = Date.now() }}>
-                <span className={spinning ? 'refresh-icon spinning' : 'refresh-icon'}>↻</span> Refresh
-              </button>
-            </div>
+            <span className="sidebar-title">Tasks</span>
           </div>
-          <BrainItemsPanel refreshTick={refreshTick} />
-          <BeadsPanel onNewSession={onNewSession} refreshTick={refreshTick} onRefreshDone={() => {
-            const elapsed = Date.now() - spinStart.current
-            const remaining = SPIN_MIN - elapsed
-            if (remaining > 0) setTimeout(() => setSpinning(false), remaining)
-            else setSpinning(false)
-          }} />
+          <TasksPanel />
           <ScriptsPanel />
         </div>
       </aside>

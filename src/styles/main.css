@@ -1140,6 +1140,21 @@ html[data-theme="dark"] .eyebrow {
   cursor: pointer;
 }
 
+/* ── Tasks sidebar panel ─────────────────────────────────── */
+.tasks-panel { display: flex; flex-direction: column; gap: 0; overflow-y: auto; flex: 1; }
+.task-add-form { display: flex; align-items: center; gap: 5px; padding: 8px 12px; border-bottom: 1px solid var(--hub-divider); }
+.task-add-input { flex: 1; background: var(--hub-bg); border: 1px solid var(--hub-border); border-radius: 4px; color: var(--hub-text); font-size: 11px; padding: 3px 8px; outline: none; }
+.task-add-input:focus { border-color: var(--hub-text-fade); box-shadow: var(--hub-focus-ring); }
+.task-add-btn { flex-shrink: 0; background: none; border: 1px solid var(--hub-btn-border); border-radius: 4px; color: var(--hub-text-fade); font-size: 14px; line-height: 1; padding: 1px 7px; cursor: pointer; }
+.task-add-btn:hover { background: var(--hub-btn-hover); color: var(--hub-text); }
+.task-list { list-style: none; margin: 0; padding: 0; }
+.task-item { display: flex; align-items: center; gap: 7px; padding: 7px 12px; border-bottom: 1px solid var(--hub-divider); }
+.task-item:last-child { border-bottom: none; }
+.task-title { flex: 1; font-size: 11px; color: var(--hub-text); line-height: 1.4; }
+.task-close { flex-shrink: 0; background: none; border: none; color: var(--hub-text-fade); font-size: 14px; line-height: 1; padding: 0 2px; cursor: pointer; opacity: 0.5; }
+.task-close:hover { opacity: 1; color: var(--hub-text); }
+.panel-empty { padding: 12px; font-size: 11px; color: var(--hub-text-fade); text-align: center; }
+
 /* ── Beads sidebar panel ─────────────────────────────────── */
 .beads-panel       { display: flex; flex-direction: column; gap: 0; overflow-y: auto; }
 .bead-group        { border-bottom: 1px solid var(--hub-divider); }
