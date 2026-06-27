@@ -2,8 +2,9 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 
-const PROJECTS_DIR = join(homedir(), '.claude', 'projects')
-const GLOBAL_SETTINGS = join(homedir(), '.claude', 'settings.json')
+const _claudeHome = process.env.CLAUDE_HOME || homedir()
+const PROJECTS_DIR = join(_claudeHome, '.claude', 'projects')
+const GLOBAL_SETTINGS = join(_claudeHome, '.claude', 'settings.json')
 
 const ACTIVE_MS = 5 * 60 * 1000
 const IDLE_MS   = 30 * 60 * 1000
