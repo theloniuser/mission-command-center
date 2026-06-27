@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
-const EMPTY_FORM = { name: '', path: '', launch_command: '' }
+const EMPTY_FORM = { name: '', path: '', launch_command: '', color: '#6366f1' }
 
 export default function ProjectsConfig({ projects, onRefresh }) {
   const [form, setForm] = useState(EMPTY_FORM)
@@ -58,7 +58,7 @@ export default function ProjectsConfig({ projects, onRefresh }) {
 
   function startEdit(project) {
     setEditingId(project.id)
-    setForm({ name: project.name, path: project.path, launch_command: project.launch_command || '' })
+    setForm({ name: project.name, path: project.path, launch_command: project.launch_command || '', color: project.color || '#6366f1' })
   }
 
   function cancelEdit() {
@@ -142,15 +142,30 @@ export default function ProjectsConfig({ projects, onRefresh }) {
               </div>
             </div>
           </div>
-          <div className="form-group">
-            <label>Launch command <span>(optional)</span></label>
-            <input
-              className="form-input"
-              name="launch_command"
-              value={form.launch_command}
-              onChange={handleChange}
-              placeholder="claude"
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Launch command <span>(optional)</span></label>
+              <input
+                className="form-input"
+                name="launch_command"
+                value={form.launch_command}
+                onChange={handleChange}
+                placeholder="claude"
+              />
+            </div>
+            <div className="form-group" style={{ flex: '0 0 auto' }}>
+              <label>Color</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', height: '36px' }}>
+                <input
+                  type="color"
+                  name="color"
+                  value={form.color}
+                  onChange={handleChange}
+                  style={{ width: '36px', height: '36px', padding: '2px', border: '1px solid var(--hub-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', background: 'none' }}
+                />
+                <span style={{ fontSize: 'var(--font-size-small)', color: 'var(--hub-text-fade)', fontFamily: 'monospace' }}>{form.color}</span>
+              </div>
+            </div>
           </div>
           <div className="form-actions">
             {editingId && (

@@ -89,7 +89,7 @@ app.post('/api/projects', (req, res) => {
     path: req.body.path,
     launch_command: req.body.launch_command || '',
     beads_ids: req.body.beads_ids || [],
-    color: TILE_COLORS[projects.length % TILE_COLORS.length],
+    color: req.body.color || TILE_COLORS[projects.length % TILE_COLORS.length],
   }
   projects.push(project)
   writeConfig('projects.json', projects)
