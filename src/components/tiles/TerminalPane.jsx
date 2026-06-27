@@ -370,5 +370,36 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     }
   }, [])
 
-  return <div className="terminal-container" ref={containerRef} />
+  return (
+    <div className="terminal-container">
+      <div ref={containerRef} style={{ height: '100%' }} />
+      {showScrollBtn && (
+        <button
+          onClick={() => { termRef.current?.scrollToBottom(); setShowScrollBtn(false) }}
+          title="Scroll to bottom"
+          style={{
+            position: 'absolute',
+            bottom: 14,
+            right: 34,
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            border: theme === 'dark' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(0,0,0,0.15)',
+            background: theme === 'dark' ? 'rgba(40,40,40,0.92)' : 'rgba(255,255,255,0.92)',
+            color: theme === 'dark' ? '#ffffff' : '#1a1a1a',
+            fontSize: 15,
+            lineHeight: 1,
+            cursor: 'pointer',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: theme === 'dark' ? '0 2px 8px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.15)',
+          }}
+        >
+          ↓
+        </button>
+      )}
+    </div>
+  )
 }
