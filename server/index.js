@@ -641,11 +641,11 @@ wss.on('error', (err) => {
 
 // ── Start ─────────────────────────────────────────────────
 
+let _bindRetries = 0
 server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    // Port still bound after restart — wait 3s and retry rather than exiting
-    // immediately (which triggers launchd KeepAlive loop and 34k error entries).
-    console.error(`[server error] port ${PORT} in use — retrying in 3s`)
+  if (err.code === 'EADDRINUSE' && _bindRetries < 5) {
+    _bindRetries++
+    console.error(`[server error] port ${PORT} in use — retry ${_bindRetries}/5 in 3s`)
     setTimeout(() => server.listen(PORT), 3000)
   } else {
     console.error('[server error]', err)
