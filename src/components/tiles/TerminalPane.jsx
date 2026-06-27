@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Terminal } from 'xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import 'xterm/css/xterm.css'
@@ -53,6 +53,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
   const containerRef = useRef(null)
   const termRef = useRef(null)
   const wsRef = useRef(null)
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
   const { theme } = useTheme()
   const { consumePendingCommand, registerTerminal, unregisterTerminal, registerTerminalFocus, unregisterTerminalFocus, registerTerminalReader, unregisterTerminalReader } = useTerminal()
 
@@ -282,6 +283,11 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       }
     })
 
+    const scrollDisposable = term.onScroll(() => {
+      const buf = term.buffer.active
+      setShowScrollBtn(buf.viewportY < buf.length - term.rows)
+    })
+
     const ro = new ResizeObserver(() => {
       const el = containerRef.current
       if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) return
@@ -314,6 +320,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       unregisterTerminalFocus(terminalId)
       unregisterTerminalReader(terminalId)
       dataDisposable.dispose()
+      scrollDisposable.dispose()
       ro.disconnect()
       wsRef.current?.close()
       wsRef.current = null
