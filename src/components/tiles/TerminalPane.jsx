@@ -154,7 +154,14 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
           if (blocked) {
             term.write(`\r\n\x1b[31m[Session expired — reload the page to reconnect]\x1b[0m\r\n`)
           } else {
-            term.write(`\r\n\x1b[31m[Connection unavailable after ${RECONNECT_MAX_ATTEMPTS} attempts. Reconnect will retry when the browser wakes or comes online.]\x1b[0m\r\n`)
+            term.write(`\r\n\x1b[33m[Connection unavailable — retrying in 30s…]\x1b[0m\r\n`)
+            // Auto-retry after a longer pause so server restart is transparent
+            reconnectTimer = setTimeout(() => {
+              reconnectTimer = null
+              reconnectAttempts = 0
+              reconnectNoticeShown = false
+              scheduleReconnect('auto-retry')
+            }, 30_000)
           }
         })
         return
