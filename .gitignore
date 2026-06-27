@@ -1,6 +1,7 @@
 node_modules/
 dist/
 config/settings.json
+config/projects.json
 config/tasks.json
 config/notes.md
 config/sessions.json
