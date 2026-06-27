@@ -13,7 +13,19 @@ function readFile(file) {
       reader.readAsText(file)
     })
   }
-  return Promise.resolve(`[${file.name}]`)
+  // Binary files: insert a labeled placeholder (PDFs can't be read as text in browser)
+  const label = file.type === 'application/pdf' ? `PDF: ${file.name}` : file.name
+  return Promise.resolve(`[${label}]`)
+}
+
+// Extract filename from a file:// URI (Linux DEs pass these instead of File objects)
+function nameFromUri(uri) {
+  try { return decodeURIComponent(new URL(uri.trim()).pathname.split('/').pop()) }
+  catch { return uri.trim() }
+}
+
+function labelFromName(name) {
+  return /\.pdf$/i.test(name) ? `[PDF: ${name}]` : `[${name}]`
 }
 
 export default function BrainCapture({ inline = false, onCaptured }) {
@@ -32,13 +44,46 @@ export default function BrainCapture({ inline = false, onCaptured }) {
   function handlePaste(e) {
     const items = e.clipboardData?.items
     if (!items) return
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault()
-        suppressNextChangeRef.current = true
-        setText(prev => prev ? `${prev}\n[image pasted]` : '[image pasted]')
-        return
-      }
+
+    // Handle file items (images, PDFs) — works on Mac/Chrome; Firefox/Linux may not expose these
+    const fileItems = Array.from(items).filter(item => item.kind === 'file')
+    if (fileItems.length) {
+      e.preventDefault()
+      suppressNextChangeRef.current = true
+      const labels = fileItems.map(item => {
+        if (item.type.startsWith('image/')) return '[image pasted]'
+        if (item.type === 'application/pdf') {
+          const file = item.getAsFile()
+          return file ? `[PDF: ${file.name || 'document.pdf'}]` : '[PDF pasted]'
+        }
+        const file = item.getAsFile()
+        return file ? labelFromName(file.name) : `[${item.type || 'file'} pasted]`
+      })
+      setText(prev => {
+        const addition = labels.join('\n')
+        return prev ? `${prev}\n${addition}` : addition
+      })
+      return
+    }
+
+    // Linux fallback: Nautilus and some Linux clipboard managers expose pasted files
+    // as text/uri-list rather than File objects
+    const uriItem = Array.from(items).find(item => item.type === 'text/uri-list')
+    if (uriItem) {
+      e.preventDefault()
+      suppressNextChangeRef.current = true
+      uriItem.getAsString(uris => {
+        const names = uris.split('\n')
+          .map(s => s.trim())
+          .filter(s => s && !s.startsWith('#'))
+          .map(nameFromUri)
+          .filter(Boolean)
+        if (names.length) {
+          const addition = names.map(labelFromName).join('\n')
+          setText(prev => prev ? `${prev}\n${addition}` : addition)
+        }
+      })
+      return
     }
   }
 
@@ -54,11 +99,38 @@ export default function BrainCapture({ inline = false, onCaptured }) {
     e.preventDefault()
     e.stopPropagation()
     setDragging(false)
-    const files = Array.from(e.dataTransfer.files)
-    if (!files.length) return
-    const contents = await Promise.all(files.map(readFile))
-    const inserted = contents.join('\n\n')
-    setText(prev => prev ? `${prev}\n\n${inserted}` : inserted)
+
+    // Primary: files array — works in Chrome on all platforms
+    let files = Array.from(e.dataTransfer.files)
+
+    // Fallback A: items API — Firefox on Linux may populate items but not files
+    if (!files.length && e.dataTransfer.items) {
+      files = Array.from(e.dataTransfer.items)
+        .filter(item => item.kind === 'file')
+        .map(item => item.getAsFile())
+        .filter(Boolean)
+    }
+
+    if (files.length) {
+      const contents = await Promise.all(files.map(readFile))
+      const inserted = contents.join('\n\n')
+      setText(prev => prev ? `${prev}\n\n${inserted}` : inserted)
+      return
+    }
+
+    // Fallback B: text/uri-list — some Linux DEs pass file:// URIs instead of File objects
+    const uriList = e.dataTransfer.getData('text/uri-list')
+    if (uriList) {
+      const names = uriList.split('\n')
+        .map(s => s.trim())
+        .filter(s => s && !s.startsWith('#'))
+        .map(nameFromUri)
+        .filter(Boolean)
+      if (names.length) {
+        const inserted = names.map(labelFromName).join('\n\n')
+        setText(prev => prev ? `${prev}\n\n${inserted}` : inserted)
+      }
+    }
   }
 
   async function submit() {
