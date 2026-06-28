@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect } from 'react'
-import ScriptsPanel from '../sidebar/ScriptsPanel.jsx'
 
 const MIN_WIDTH = 200
 const MAX_WIDTH = 600
@@ -96,7 +95,6 @@ export default function Sidebar({ onNewSession }) {
             <span className="sidebar-title">Tasks</span>
           </div>
           <TasksPanel />
-          <ScriptsPanel />
         </div>
       </aside>
 
