@@ -405,8 +405,8 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
           title="Scroll to bottom"
           style={{
             position: 'absolute',
-            bottom: 34,
-            right: 34,
+            bottom: 44,
+            right: 24,
             width: 28,
             height: 28,
             borderRadius: '50%',
