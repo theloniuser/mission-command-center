@@ -2,6 +2,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 
+// CLAUDE_HOME overrides the default homedir for Docker/remote deployments
 const _claudeHome = process.env.CLAUDE_HOME || homedir()
 const PROJECTS_DIR = join(_claudeHome, '.claude', 'projects')
 const GLOBAL_SETTINGS = join(_claudeHome, '.claude', 'settings.json')

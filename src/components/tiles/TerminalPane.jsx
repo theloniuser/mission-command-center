@@ -80,6 +80,27 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     term.loadAddon(fitAddon)
     term.open(containerRef.current)
 
+    const vp = term.element?.querySelector('.xterm-viewport')
+    let vpScrollListener = null
+    let hideScrollBtnTimer = null
+    if (vp) {
+      vpScrollListener = () => {
+        const atBottom = vp.scrollTop + vp.clientHeight >= vp.scrollHeight - 5
+        if (!atBottom) {
+          if (hideScrollBtnTimer) { clearTimeout(hideScrollBtnTimer); hideScrollBtnTimer = null }
+          setShowScrollBtn(true)
+        } else {
+          if (!hideScrollBtnTimer) {
+            hideScrollBtnTimer = setTimeout(() => {
+              setShowScrollBtn(false)
+              hideScrollBtnTimer = null
+            }, 1500)
+          }
+        }
+      }
+      vp.addEventListener('scroll', vpScrollListener)
+    }
+
     // Ctrl+Shift+V: paste from clipboard (Linux browser convention)
     term.attachCustomKeyEventHandler((e) => {
       if (e.type === 'keydown' && e.ctrlKey && e.shiftKey && e.key === 'V') {
@@ -283,11 +304,6 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       }
     })
 
-    const scrollDisposable = term.onScroll(() => {
-      const buf = term.buffer.active
-      setShowScrollBtn(buf.viewportY < buf.length - term.rows)
-    })
-
     const ro = new ResizeObserver(() => {
       const el = containerRef.current
       if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) return
@@ -319,8 +335,11 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       unregisterTerminal(terminalId)
       unregisterTerminalFocus(terminalId)
       unregisterTerminalReader(terminalId)
+      if (hideScrollBtnTimer) clearTimeout(hideScrollBtnTimer)
+      if (vpScrollListener) {
+        term.element?.querySelector('.xterm-viewport')?.removeEventListener('scroll', vpScrollListener)
+      }
       dataDisposable.dispose()
-      scrollDisposable.dispose()
       ro.disconnect()
       wsRef.current?.close()
       wsRef.current = null
