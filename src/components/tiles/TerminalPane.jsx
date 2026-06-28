@@ -406,7 +406,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
           style={{
             position: 'absolute',
             bottom: 14,
-            right: 34,
+            right: 54,
             width: 28,
             height: 28,
             borderRadius: '50%',
@@ -421,6 +421,9 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: theme === 'dark' ? '0 2px 8px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.15)',
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            outline: 'none',
           }}
         >
           ↓
