@@ -25,7 +25,7 @@ function gaugeColor(pct) {
 }
 
 function PaneStatusBar({ terminalId, project, onAddPane, onClose, isMinimized, onToggleMinimize }) {
-  const { sendCommand, getTerminalContent } = useTerminal()
+  const { sendCommand, getTerminalContent, getTerminalLineCount } = useTerminal()
   const tokens = project.token_count ?? 0
   const status = project.status ?? 'no session'
 
@@ -34,6 +34,7 @@ function PaneStatusBar({ terminalId, project, onAddPane, onClose, isMinimized, o
 
   const [handoffPhase, setHandoffPhase] = useState('idle')
   const handoffTimer = useRef(null)
+  const handoffMarkerRef = useRef(0)
 
   const [confirmClose, setConfirmClose] = useState(false)
   const closeTimer = useRef(null)
@@ -58,11 +59,21 @@ function PaneStatusBar({ terminalId, project, onAddPane, onClose, isMinimized, o
       clearTimeout(handoffTimer.current)
       handoffTimer.current = setTimeout(() => setHandoffPhase('idle'), 3000)
     } else if (handoffPhase === 'confirm') {
+      handoffMarkerRef.current = getTerminalLineCount(terminalId)
       sendCommand(terminalId, '/session-handoff')
       setHandoffPhase('copy')
       clearTimeout(handoffTimer.current)
     } else if (handoffPhase === 'copy' || handoffPhase === 'copied') {
-      const text = getTerminalContent(terminalId)
+      // /session-handoff is often typed directly into the CLI rather than triggered via the
+      // confirm click above, so handoffMarkerRef may never be set — and the scrollback can
+      // contain earlier mentions of "Session Handoff" (e.g. the skill's own template text).
+      // Always take the LAST heading match in the buffer, never the first.
+      const extractHandoff = (source) => {
+        const matches = [...source.matchAll(/^.*Session Handoff.*$/gim)]
+        return matches.length ? source.slice(matches[matches.length - 1].index) : null
+      }
+      const scoped = getTerminalContent(terminalId, handoffMarkerRef.current)
+      const text = extractHandoff(scoped) ?? extractHandoff(getTerminalContent(terminalId)) ?? scoped
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
           setHandoffPhase('copied')

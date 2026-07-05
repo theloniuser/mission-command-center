@@ -55,7 +55,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
   const wsRef = useRef(null)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
   const { theme } = useTheme()
-  const { consumePendingCommand, registerTerminal, unregisterTerminal, registerTerminalFocus, unregisterTerminalFocus, registerTerminalReader, unregisterTerminalReader } = useTerminal()
+  const { consumePendingCommand, registerTerminal, unregisterTerminal, registerTerminalFocus, unregisterTerminalFocus, registerTerminalReader, unregisterTerminalReader, registerTerminalLineCount, unregisterTerminalLineCount } = useTerminal()
 
   useEffect(() => {
     if (termRef.current) {
@@ -289,14 +289,15 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       }
     })
     registerTerminalFocus(terminalId, () => term.focus())
-    registerTerminalReader(terminalId, () => {
+    registerTerminalReader(terminalId, (fromLine = 0) => {
       const buf = term.buffer.active
       const lines = []
-      for (let i = 0; i < buf.length; i++) {
+      for (let i = fromLine; i < buf.length; i++) {
         lines.push(buf.getLine(i)?.translateToString(true) ?? '')
       }
       return lines.join('\n').replace(ANSI_RE, '').trimEnd()
     })
+    registerTerminalLineCount(terminalId, () => term.buffer.active.length)
 
     const dataDisposable = term.onData(data => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -335,6 +336,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       unregisterTerminal(terminalId)
       unregisterTerminalFocus(terminalId)
       unregisterTerminalReader(terminalId)
+      unregisterTerminalLineCount(terminalId)
       if (hideScrollBtnTimer) clearTimeout(hideScrollBtnTimer)
       if (vpScrollListener) {
         term.element?.querySelector('.xterm-viewport')?.removeEventListener('scroll', vpScrollListener)

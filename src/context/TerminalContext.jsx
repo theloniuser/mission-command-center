@@ -10,6 +10,7 @@ export function TerminalProvider({ children }) {
   const terminalWritersRef  = useRef({})
   const terminalFocusRef    = useRef({})
   const terminalReadersRef  = useRef({})
+  const terminalLineCountRef = useRef({})
   const paneCounterRef      = useRef({})
 
   function getTerminalIds(projectId) {
@@ -57,6 +58,7 @@ export function TerminalProvider({ children }) {
     delete terminalWritersRef.current[terminalId]
     delete terminalFocusRef.current[terminalId]
     delete terminalReadersRef.current[terminalId]
+    delete terminalLineCountRef.current[terminalId]
   }
 
   function closeTerminal(projectId) {
@@ -107,8 +109,20 @@ export function TerminalProvider({ children }) {
     delete terminalReadersRef.current[id]
   }
 
-  function getTerminalContent(id) {
-    return terminalReadersRef.current[id]?.() ?? ''
+  function registerTerminalLineCount(id, countFn) {
+    terminalLineCountRef.current[id] = countFn
+  }
+
+  function unregisterTerminalLineCount(id) {
+    delete terminalLineCountRef.current[id]
+  }
+
+  function getTerminalContent(id, fromLine = 0) {
+    return terminalReadersRef.current[id]?.(fromLine) ?? ''
+  }
+
+  function getTerminalLineCount(id) {
+    return terminalLineCountRef.current[id]?.() ?? 0
   }
 
   function openChangelog(id) {
@@ -123,7 +137,8 @@ export function TerminalProvider({ children }) {
       registerTerminal, unregisterTerminal,
       registerTerminalFocus, unregisterTerminalFocus,
       registerTerminalReader, unregisterTerminalReader,
-      getTerminalContent,
+      registerTerminalLineCount, unregisterTerminalLineCount,
+      getTerminalContent, getTerminalLineCount,
       activeChangelogId, openChangelog,
     }}>
       {children}
