@@ -612,6 +612,7 @@ html:not([data-theme="dark"]) .tph-close:hover {
 }
 
 .terminal-container {
+  position: relative;
   flex: 1;
   padding: 10px 10px 0;
   overflow: hidden;
