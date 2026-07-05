@@ -60,7 +60,6 @@ app.post('/api/projects', (req, res) => {
     name: req.body.name,
     path: req.body.path,
     launch_command: req.body.launch_command || '',
-    beads_ids: req.body.beads_ids || [],
     color: req.body.color || TILE_COLORS[projects.length % TILE_COLORS.length],
   }
   projects.push(project)
@@ -154,7 +153,6 @@ app.post('/api/temp-projects/:id/promote', (req, res) => {
     name,
     path: item.path,
     launch_command: '',
-    beads_ids: [],
     color: TILE_COLORS[projects.length % TILE_COLORS.length],
   }
   projects.push(promoted)

@@ -55,7 +55,7 @@ export default function SettingsForm({ settings, onSaved }) {
             name="title"
             value={form.title || ''}
             onChange={e => { setForm(f => ({ ...f, title: e.target.value })); setSaved(false) }}
-            placeholder="ADS Command Center"
+            placeholder="Command Center"
           />
         </div>
       </section>
