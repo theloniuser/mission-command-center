@@ -6,8 +6,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || ''
 const SessionContext = createContext({
   sessions: [], stats: null, loading: true, settings: null,
   alerts: [], dismiss: () => {},
-  launcherOpen: false, launcherBead: null, openLauncher: () => {}, closeLauncher: () => {},
-  brainOpen: false, openBrain: () => {}, closeBrain: () => {},
+  launcherOpen: false, launcherContext: null, openLauncher: () => {}, closeLauncher: () => {},
 })
 
 export function useSession() {
@@ -21,20 +20,17 @@ export function SessionProvider({ children }) {
   const [settings, setSettings] = useState(null)
 
   // modal state
-  const [launcherOpen, setLauncherOpen] = useState(false)
-  const [launcherBead, setLauncherBead] = useState(null)
-  const [brainOpen, setBrainOpen]       = useState(false)
+  const [launcherOpen, setLauncherOpen]       = useState(false)
+  const [launcherContext, setLauncherContext] = useState(null)
 
-  function openLauncher(bead = null) {
-    setLauncherBead(bead)
+  function openLauncher(context = null) {
+    setLauncherContext(context)
     setLauncherOpen(true)
   }
   function closeLauncher() {
     setLauncherOpen(false)
-    setLauncherBead(null)
+    setLauncherContext(null)
   }
-  function openBrain()  { setBrainOpen(true) }
-  function closeBrain() { setBrainOpen(false) }
 
   function fetchSessions() {
     fetch(`${API_BASE}/api/sessions`)
@@ -63,8 +59,7 @@ export function SessionProvider({ children }) {
     <SessionContext.Provider value={{
       sessions, stats, loading, settings,
       alerts, dismiss,
-      launcherOpen, launcherBead, openLauncher, closeLauncher,
-      brainOpen, openBrain, closeBrain,
+      launcherOpen, launcherContext, openLauncher, closeLauncher,
     }}>
       {children}
     </SessionContext.Provider>

@@ -10,7 +10,7 @@ import Settings from './pages/Settings.jsx'
 import LauncherModal from './components/modals/LauncherModal.jsx'
 
 function AppLayout() {
-  const { launcherOpen, launcherBead, closeLauncher } = useSession()
+  const { launcherOpen, launcherContext, closeLauncher } = useSession()
   const location = useLocation()
   const isSettings = location.pathname.startsWith('/settings')
 
@@ -32,7 +32,7 @@ function AppLayout() {
         <Dashboard />
       </div>
       {isSettings && <Settings />}
-      <LauncherModal isOpen={launcherOpen} initialBead={launcherBead} onClose={closeLauncher} />
+      <LauncherModal isOpen={launcherOpen} initialContext={launcherContext} onClose={closeLauncher} />
     </>
   )
 }

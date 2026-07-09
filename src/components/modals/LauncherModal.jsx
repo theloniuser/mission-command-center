@@ -84,14 +84,14 @@ function FolderBrowser({ onSelect }) {
   )
 }
 
-export default function LauncherModal({ isOpen, initialBead, onClose }) {
-  const [projects,    setProjects]    = useState([])
-  const [projectId,   setProjectId]   = useState('')
-  const [browsedPath, setBrowsedPath] = useState(null)
-  const [agentType,   setAgentType]   = useState('Claude Code')
-  const [beadTitle,   setBeadTitle]   = useState('')
-  const [launching,   setLaunching]   = useState(false)
-  const [error,       setError]       = useState(null)
+export default function LauncherModal({ isOpen, initialContext, onClose }) {
+  const [projects,     setProjects]     = useState([])
+  const [projectId,    setProjectId]    = useState('')
+  const [browsedPath,  setBrowsedPath]  = useState(null)
+  const [agentType,    setAgentType]    = useState('Claude Code')
+  const [contextTitle, setContextTitle] = useState('')
+  const [launching,    setLaunching]    = useState(false)
+  const [error,        setError]        = useState(null)
 
   const { getTerminalIds, openTerminal, addTerminalPane } = useTerminal()
 
@@ -101,10 +101,10 @@ export default function LauncherModal({ isOpen, initialBead, onClose }) {
       setProjects(data)
       if (data.length) setProjectId(data[0].id)
     })
-    setBeadTitle(initialBead?.title || '')
+    setContextTitle(initialContext?.title || '')
     setBrowsedPath(null)
     setError(null)
-  }, [isOpen, initialBead])
+  }, [isOpen, initialContext])
 
   async function handleLaunch() {
     if (projectId === BROWSE_ID) {
@@ -112,8 +112,8 @@ export default function LauncherModal({ isOpen, initialBead, onClose }) {
       setLaunching(true)
       setError(null)
       try {
-        const command = beadTitle
-          ? `claude --context "${beadTitle.replace(/"/g, '\\"')}"`
+        const command = contextTitle
+          ? `claude --context "${contextTitle.replace(/"/g, '\\"')}"`
           : 'claude'
         const res = await fetch(`${API_BASE}/api/launch`, {
           method: 'POST',
@@ -184,13 +184,13 @@ export default function LauncherModal({ isOpen, initialBead, onClose }) {
               {AGENT_TYPES.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
           </label>
-          {beadTitle && (
+          {contextTitle && (
             <label className="modal-field">
-              <span>Bead context</span>
+              <span>Context</span>
               <input
                 type="text"
-                value={beadTitle}
-                onChange={e => setBeadTitle(e.target.value)}
+                value={contextTitle}
+                onChange={e => setContextTitle(e.target.value)}
               />
             </label>
           )}
