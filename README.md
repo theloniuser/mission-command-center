@@ -51,6 +51,7 @@ The path is used to detect active Claude Code sessions and scan for changelog fi
 - Project tiles with live session status
 - In-browser terminal (multi-pane)
 - Changelog feed (`changes.*.md` viewer)
+- Per-project audio alerts (5 tones) when a session needs a response or hits a threshold
 - Local task list
 - Brand theming (Generic / Custom)
 - Configurable dashboard title and alert thresholds
