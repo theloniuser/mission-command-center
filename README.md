@@ -6,47 +6,6 @@ It's built and maintained by [Arc Design Studio](mailto:jimc@arcdesignstudio.com
 
 ---
 
-## Tiers
-
-**Starter** — free, open source, fully self-serve. Everything below is included out of the box: no code is gated, no license key, no config beyond what's in this README. Good fit if you work solo or on a small team and just want one browser tab that shows what's running and lets you launch more of it.
-
-- Project tiles with live session status
-- In-browser terminal (multi-pane)
-- Changelog feed (`changes.*.md` viewer)
-- Local task list
-- Brand theming (Generic / Custom)
-- Configurable dashboard title and alert thresholds
-
-**Standard — a backlog that actually knows what's going on**
-
-[Beads](https://github.com/gastownhall/beads) itself is open source and installs in about 30 seconds (`bd init` in your repo). That's not what you're paying for. What you're paying for is the dashboard experience built on top of it — the part `bd` alone doesn't give you:
-
-- Live backlog in the sidebar, grouped by project, always current — no terminal command needed to check status
-- **Launch** a task straight into a new AI coding session pre-loaded with that task as context — one click
-- **Copy** a task's title to hand off to any other agent or chat
-- Check a task off right from the sidebar — it closes everywhere else that reads the tracker too
-- Recurring tasks ("rituals") tracked separately with last-run / next-run timers, so nothing scheduled quietly falls through
-
-ADS builds and wires this whole sidebar into your Command Center instance, in place of the local task list. **Starting at $350.**
-
-**Pro — your own knowledge system, wired straight into your workflow**
-
-If Standard gives your agents a shared backlog, Pro gives you a shared memory. Most people who work seriously with AI tools eventually build some kind of "second brain" — a place notes, decisions, and open loops get captured over time so nothing important gets lost between sessions. Open Brain, Notion, Obsidian, a custom Supabase setup — whatever you already use, Pro connects it directly into Command Center. Every knowledge system's API is different, so this is scoped, hands-on integration work, not a templated install:
-
-- Capture a thought, a pasted link, or a dropped file — including PDFs and images — into your knowledge system without ever leaving your terminal
-- A live "For Claude" / "To Do" feed pulled straight from that same system, right in the sidebar, always current
-- Promote any item into an actual tracked task with one click — no re-typing it into the backlog by hand
-
-**Starting at $750.**
-
-**Custom Branding — make it look like yours**
-
-Starter already supports pointing Command Center at your own colors and logo (Settings → Brand → Custom) — nothing stops you from doing that yourself, and it's covered in full under Settings below. But a self-applied palette swap and a real brand pass aren't the same thing. If you're delivering this to a client or want it to feel native to your own company, [Arc Design Studio](mailto:jimc@arcdesignstudio.com) will design and build the whole brand treatment for you — tokens, logo placement, every component checked against your brand — so it reads as built for you, not reskinned after the fact.
-
-This isn't a roadmap slide — Standard, Pro, and Custom Branding are all running today inside ADS's own internal Command Center. Interested in any of them? Email [jimc@arcdesignstudio.com](mailto:jimc@arcdesignstudio.com) to scope it.
-
----
-
 ## Prerequisites
 
 - Node.js 18+
@@ -82,6 +41,47 @@ Go to **Settings → Projects**, add a project with its local path, and you're r
 - **Launch command** (optional) — defaults to `claude`; can be `codex`, `cursor`, etc.
 
 The path is used to detect active Claude Code sessions and scan for changelog files.
+
+---
+
+## Tiers
+
+**Starter** — free, open source, fully self-serve. Everything below is included out of the box: no code is gated, no license key, no config beyond what's in this README. Good fit if you work solo or on a small team and just want one browser tab that shows what's running and lets you launch more of it.
+
+- Project tiles with live session status
+- In-browser terminal (multi-pane)
+- Changelog feed (`changes.*.md` viewer)
+- Local task list
+- Brand theming (Generic / Custom)
+- Configurable dashboard title and alert thresholds
+
+**Standard — a backlog that actually knows what's going on**
+
+[Beads](https://github.com/gastownhall/beads) itself is open source and installs in about 30 seconds (`bd init` in your repo). That's not what you're paying for. What you're paying for is the dashboard experience built on top of it — the part `bd` alone doesn't give you:
+
+- Live backlog in the sidebar, grouped by project, always current — no terminal command needed to check status
+- **Launch** a task straight into a new AI coding session pre-loaded with that task as context — one click
+- **Copy** a task's title to hand off to any other agent or chat
+- Check a task off right from the sidebar — it closes everywhere else that reads the tracker too
+- Recurring tasks ("rituals") tracked separately with last-run / next-run timers, so nothing scheduled quietly falls through
+
+ADS builds and wires this whole sidebar into your Command Center instance, in place of the local task list. **Starting at $350.**
+
+**Pro — your own knowledge system, wired straight into your workflow**
+
+If Standard gives your agents a shared backlog, Pro gives them shared memory — capture and retrieval wired directly into Command Center instead of living in a separate tab. Notion, Obsidian, Open Brain, a custom Supabase setup — whatever you already use to track notes, decisions, and open loops, Pro connects it in. Every knowledge system's API is different, so this is scoped, hands-on integration work, not a templated install:
+
+- Capture a thought, a pasted link, or a dropped file — including PDFs and images — into your knowledge system without ever leaving your terminal
+- A live "For Claude" / "To Do" feed pulled straight from that same system, right in the sidebar, always current
+- Promote any item into an actual tracked task with one click — no re-typing it into the backlog by hand
+
+**Starting at $750.**
+
+**Custom Branding — make it look like yours**
+
+Starter already supports pointing Command Center at your own colors and logo (Settings → Brand → Custom) — nothing stops you from doing that yourself, and it's covered in full under Settings below. But a self-applied palette swap and a real brand pass aren't the same thing. If you're delivering this to a client or want it to feel native to your own company, [Arc Design Studio](mailto:jimc@arcdesignstudio.com) will design and build the whole brand treatment for you — tokens, logo placement, every component checked against your brand — so it reads as built for you, not reskinned after the fact.
+
+This isn't a roadmap slide — Standard, Pro, and Custom Branding are all running today inside ADS's own internal Command Center. Interested in any of them? Email [jimc@arcdesignstudio.com](mailto:jimc@arcdesignstudio.com) to scope it.
 
 ---
 
