@@ -2,7 +2,7 @@
 
 If you run Claude Code, Codex, or any other AI coding assistant across more than a couple of projects, you already know the problem. Sessions pile up across scattered terminal windows, you lose track of what's actually still running, and every context switch means hunting for the right window again. Command Center puts all of it in a single browser tab: live status for every project, a terminal you can launch straight from the dashboard, and a running record of what changed and why, so you always know where things stand without digging back through history.
 
-It's built and maintained by [Arc Design Studio](mailto:jimc@arcdesignstudio.com). The core you'll read about below is free and open source, and this guide covers everything you need to run it yourself — plus, further down, what ADS can build on top of it for you.
+It's built and maintained by [Arc Design Studio](mailto:build@arcdesignstudio.com). The core you'll read about below is free and open source, and this guide covers everything you need to run it yourself — plus, further down, what ADS can build on top of it for you.
 
 ---
 
@@ -79,9 +79,9 @@ If Standard gives your agents a shared backlog, Pro gives them shared memory —
 
 **Custom Branding — make it look like yours**
 
-Starter already supports pointing Command Center at your own colors and logo (Settings → Brand → Custom) — nothing stops you from doing that yourself, and it's covered in full under Settings below. But a self-applied palette swap and a real brand pass aren't the same thing. If you're delivering this to a client or want it to feel native to your own company, [Arc Design Studio](mailto:jimc@arcdesignstudio.com) will design and build the whole brand treatment for you — tokens, logo placement, every component checked against your brand — so it reads as built for you, not reskinned after the fact.
+Starter already supports pointing Command Center at your own colors and logo (Settings → Brand → Custom) — nothing stops you from doing that yourself, and it's covered in full under Settings below. But a self-applied palette swap and a real brand pass aren't the same thing. If you're delivering this to a client or want it to feel native to your own company, [Arc Design Studio](mailto:build@arcdesignstudio.com) will design and build the whole brand treatment for you — tokens, logo placement, every component checked against your brand — so it reads as built for you, not reskinned after the fact.
 
-This isn't a roadmap slide — Standard, Pro, and Custom Branding are all running today inside ADS's own internal Command Center. Interested in any of them? Email [jimc@arcdesignstudio.com](mailto:jimc@arcdesignstudio.com) to scope it.
+This isn't a roadmap slide — Standard, Pro, and Custom Branding are all running today inside ADS's own internal Command Center. Interested in any of them? Email [build@arcdesignstudio.com](mailto:build@arcdesignstudio.com) to scope it.
 
 ---
 
