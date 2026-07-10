@@ -247,8 +247,9 @@ Walk through these after setup:
 - Confirm the project path matches where Claude Code is actually running
 
 **Port conflict:**
-- The Express server runs on port 3001, Vite on 5173
-- If either is in use: `lsof -ti:3001 | xargs kill` or `lsof -ti:5173 | xargs kill`
+- The Express server runs on port 3002 (set via `PORT` env var, defaults to 3002 in `server/index.js`), Vite on 5173
+- If either is in use: `lsof -ti:3002 | xargs kill` or `lsof -ti:5173 | xargs kill`
+- Note: port 3001 is used by an unrelated service (the InDesign UXP bridge server) on this machine — don't confuse the two when debugging connectivity
 
 ---
 
