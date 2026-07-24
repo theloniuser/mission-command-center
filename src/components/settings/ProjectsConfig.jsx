@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 const EMPTY_FORM = { name: '', path: '', launch_command: '', color: '#6366f1' }
@@ -9,6 +9,7 @@ export default function ProjectsConfig({ projects, onRefresh }) {
   const [editingId, setEditingId] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const formRef = useRef(null)
 
   function handleChange(e) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
@@ -59,6 +60,7 @@ export default function ProjectsConfig({ projects, onRefresh }) {
   function startEdit(project) {
     setEditingId(project.id)
     setForm({ name: project.name, path: project.path, launch_command: project.launch_command || '', color: project.color || '#6366f1' })
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   function cancelEdit() {
@@ -98,7 +100,7 @@ export default function ProjectsConfig({ projects, onRefresh }) {
         </div>
       )}
 
-      <div className="add-project-form">
+      <div className="add-project-form" ref={formRef}>
         <p className="add-project-form-title">
           {editingId ? 'Edit project' : 'Add project'}
         </p>
