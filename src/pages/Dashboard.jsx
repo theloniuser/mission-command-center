@@ -85,7 +85,7 @@ export default function Dashboard() {
         )}
       </main>
 
-      <Sidebar onNewSession={bead => openLauncher({ title: `Work on: [${bead.id}] ${bead.title}` })} />
+      <Sidebar onNewSession={task => openLauncher({ title: `Work on: [${task.id}] ${task.title}` })} />
     </div>
   )
 }
