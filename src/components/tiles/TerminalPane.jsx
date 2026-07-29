@@ -48,9 +48,27 @@ const RECONNECT_MAX_MS = 10_000
 const RECONNECT_MAX_ATTEMPTS = 12
 const KEEPALIVE_MS = 25_000
 
-export default function TerminalPane({ projectPath, projectId, terminalId: terminalIdProp, launchCommand }) {
+// Claude Code's own CLI recolors two distinct things with 16-color ANSI codes
+// (confirmed against a live session's raw PTY buffer in config/sessions.json):
+// the "thinking" spinner glyph uses bright yellow (ESC[93m), and a selected
+// row in an interactive list (e.g. "1. Yes, commit" in a confirm prompt) uses
+// bright white (ESC[97m) — an earlier version of this function assumed the
+// list-selection highlight was also yellow/bold; the raw buffer showed the
+// selected option's text is ESC[97m while unselected options are ESC[37m
+// (plain white), so recoloring only yellow left selections unchanged. Both
+// are overridden here rather than intercepting raw PTY output. Note: this
+// replaces LIGHT_THEME's contrast-tuned yellow/brightWhite, so minimumContrastRatio
+// (set below) is relied on to keep accent colors with poor contrast against
+// the light background readable.
+function themeWithAccent(base, accentColor) {
+  if (!accentColor) return base
+  return { ...base, yellow: accentColor, brightYellow: accentColor, brightWhite: accentColor }
+}
+
+export default function TerminalPane({ projectPath, projectId, terminalId: terminalIdProp, launchCommand, pasteText, accentColor }) {
   const terminalId = terminalIdProp ?? projectId
   const containerRef = useRef(null)
+  const paneRef = useRef(null)
   const termRef = useRef(null)
   const wsRef = useRef(null)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
@@ -59,10 +77,10 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
 
   useEffect(() => {
     if (termRef.current) {
-      termRef.current.options.theme = theme === 'dark' ? DARK_THEME : LIGHT_THEME
+      termRef.current.options.theme = themeWithAccent(theme === 'dark' ? DARK_THEME : LIGHT_THEME, accentColor)
       termRef.current.options.minimumContrastRatio = theme === 'dark' ? 1 : 4.5
     }
-  }, [theme])
+  }, [theme, accentColor])
 
   useEffect(() => {
     const term = new Terminal({
@@ -71,7 +89,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       fontSize: 13,
       lineHeight: 1.4,
-      theme: theme === 'dark' ? DARK_THEME : LIGHT_THEME,
+      theme: themeWithAccent(theme === 'dark' ? DARK_THEME : LIGHT_THEME, accentColor),
       minimumContrastRatio: theme === 'dark' ? 1 : 4.5,
     })
     termRef.current = term
@@ -238,7 +256,7 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
         }
         isFirstConnect = false
 
-        send(ws, { type: 'init', terminalId, projectPath, launchCommand: launchCommand || '', cols, rows })
+        send(ws, { type: 'init', terminalId, projectPath, launchCommand: launchCommand || '', pasteText: pasteText || '', cols, rows })
 
         // Only consume pending command on fresh connect (not reconnect after sleep)
         const pending = wasFirstConnect ? consumePendingCommand(terminalId) : null
@@ -398,8 +416,37 @@ export default function TerminalPane({ projectPath, projectId, terminalId: termi
     }
   }, [])
 
+  // A pane scrolling into view claims chat focus, unless the user is
+  // deliberately focused on some other input (a modal field, the sidebar
+  // capture box) — only steal focus from the document body or another
+  // terminal's own hidden input, never from an unrelated field.
+  useEffect(() => {
+    const el = paneRef.current
+    if (!el) return
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0]
+      if (!entry.isIntersecting) return
+      const active = document.activeElement
+      const stealable = !active || active === document.body || active.classList?.contains('xterm-helper-textarea')
+      if (stealable) termRef.current?.focus()
+    }, { threshold: 0.6 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  // xterm already focuses itself when a click lands on its own rendered
+  // content — this only covers the container's dead-zone padding, where a
+  // real trusted mousedown's native default action (blur-to-body, since a
+  // plain div isn't focusable) would otherwise undo a same-handler focus()
+  // call unless that default action is suppressed first.
+  function handlePaneMouseDown(e) {
+    if (e.target.closest('.xterm')) return
+    e.preventDefault()
+    termRef.current?.focus()
+  }
+
   return (
-    <div className="terminal-container">
+    <div className="terminal-container" ref={paneRef} onMouseDown={handlePaneMouseDown}>
       <div ref={containerRef} style={{ height: '100%' }} />
       {showScrollBtn && (
         <button

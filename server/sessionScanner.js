@@ -128,12 +128,15 @@ function scanSession(projectPath, projectId, projectName) {
     }
   }
 
-  // "Needs response" = last typed entry is from assistant (Claude finished, waiting for user)
+  // "Needs response" = last typed entry is an assistant turn that actually ended
+  // (stop_reason 'end_turn'), not a mid-turn tool_use waiting on a tool result —
+  // otherwise a slow tool call (Agent/Task, Workflow, WebFetch, long Bash) reads
+  // as "needs response" for as long as it's still running.
   let needsResponse = false
   for (let i = lines.length - 1; i >= 0; i--) {
     let entry
     try { entry = JSON.parse(lines[i]) } catch { continue }
-    if (entry.type === 'assistant') { needsResponse = true; break }
+    if (entry.type === 'assistant') { needsResponse = entry.message?.stop_reason === 'end_turn'; break }
     if (entry.type === 'user') { needsResponse = false; break }
   }
 

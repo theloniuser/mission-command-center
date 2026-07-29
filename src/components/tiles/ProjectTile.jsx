@@ -151,7 +151,7 @@ export default function ProjectTile({ project }) {
   const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
   const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
 
-  const { getTerminalIds, openTerminal, addTerminalPane, closeTerminalPane, sendCommand, activeChangelogId, openChangelog } = useTerminal()
+  const { getTerminalIds, openTerminal, addTerminalPane, closeTerminalPane, sendCommand, getLaunchOverride, activeChangelogId, openChangelog } = useTerminal()
   const terminalIds = getTerminalIds(project.id)
   const isExpanded = terminalIds.length > 0
   const [minimizedPanes, setMinimizedPanes] = useState(new Set())
@@ -175,22 +175,29 @@ export default function ProjectTile({ project }) {
 
   const { alerts, dismiss } = useSession()
   const myAlerts = alerts.filter(a => a.projectId === project.id)
-  const prevAlertCountRef  = useRef(0)
-  const prevNeedsRespRef   = useRef(false)
-  const audioMountedRef    = useRef(false)
+  const alertsKey = myAlerts.map(a => a.id).join(',')
+  const seenAlertIdsRef  = useRef(null)
+  const prevNeedsRespRef = useRef(null)
 
+  // Token-threshold alerts (warn/critical) get the urgent alarm sound; inactivity
+  // alerts (info) are shown in the sidebar list below but stay silent — "no new
+  // JSONL activity for N minutes" isn't a reliable signal that Claude needs input.
   useEffect(() => {
-    if (!audioMountedRef.current) { prevAlertCountRef.current = myAlerts.length; audioMountedRef.current = true; return }
-    if (myAlerts.length > prevAlertCountRef.current) {
-      const prefs = getPrefs()
-      if (prefs.enabled !== false) play(prefs.sound || 'chime')
+    if (seenAlertIdsRef.current === null) {
+      seenAlertIdsRef.current = new Set(myAlerts.map(a => a.id))
+      return
     }
-    prevAlertCountRef.current = myAlerts.length
-  }, [myAlerts.length, play, getPrefs])
+    const newOnes = myAlerts.filter(a => !seenAlertIdsRef.current.has(a.id))
+    newOnes.forEach(a => seenAlertIdsRef.current.add(a.id))
+    if (newOnes.some(a => a.type === 'warn' || a.type === 'critical')) {
+      const prefs = getPrefs()
+      if (prefs.enabled !== false) play('alarm')
+    }
+  }, [alertsKey, myAlerts, play, getPrefs])
 
   useEffect(() => {
     const nowNeeds = !!project.needs_response
-    if (audioMountedRef.current && nowNeeds && !prevNeedsRespRef.current) {
+    if (prevNeedsRespRef.current !== null && nowNeeds && !prevNeedsRespRef.current) {
       const prefs = getPrefs()
       if (prefs.enabled !== false) play(prefs.sound || 'chime')
     }
@@ -222,7 +229,7 @@ export default function ProjectTile({ project }) {
           const minimized = minimizedPanes.has(terminalId)
           return (
             <div key={terminalId} className={`terminal-pane-wrapper${minimized ? ' terminal-pane-minimized' : ''}`}>
-              <TerminalPane projectPath={project.path} projectId={project.id} terminalId={terminalId} launchCommand={project.launch_command} />
+              <TerminalPane projectPath={project.path} projectId={project.id} terminalId={terminalId} launchCommand={project.launch_command} pasteText={getLaunchOverride(terminalId)} accentColor={project.color} />
               <PaneStatusBar
                 terminalId={terminalId}
                 project={project}

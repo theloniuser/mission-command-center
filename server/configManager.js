@@ -3,7 +3,7 @@ import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const CONFIG_DIR = join(__dirname, '..', 'config')
+const CONFIG_DIR = process.env.CONFIG_DIR ? join(process.env.CONFIG_DIR) : join(__dirname, '..', 'config')
 
 const DEFAULTS = {
   'projects.json': [],

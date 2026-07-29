@@ -59,6 +59,20 @@ function synthesize(ctx, soundId) {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
     osc.connect(gain)
     osc.start(); osc.stop(ctx.currentTime + 0.3)
+  } else if (soundId === 'alarm') {
+    // Urgent triple-buzz, reserved for token-threshold warnings — distinct from
+    // the user-selectable "needs input" sounds above.
+    for (const delay of [0, 0.18, 0.36]) {
+      const osc = ctx.createOscillator()
+      osc.type = 'sawtooth'
+      osc.frequency.value = 740
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0, ctx.currentTime + delay)
+      g.gain.linearRampToValueAtTime(0.5, ctx.currentTime + delay + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.15)
+      osc.connect(g); g.connect(ctx.destination)
+      osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.15)
+    }
   }
 }
 

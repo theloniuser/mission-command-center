@@ -5,6 +5,13 @@ const API_BASE = import.meta.env.VITE_API_BASE || ''
 const AGENT_TYPES = ['Claude Code', 'claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5']
 const BROWSE_ID = '__browse__'
 
+// Single-quote the string for a POSIX shell — unlike double quotes, this blocks
+// $(...), backticks, and $VAR expansion. Embedded single quotes are closed,
+// escaped, and reopened.
+function shQuote(str) {
+  return `'${str.replace(/'/g, "'\\''")}'`
+}
+
 function FolderBrowser({ onSelect }) {
   const [path,        setPath]        = useState(null)
   const [dirs,        setDirs]        = useState([])
@@ -93,7 +100,7 @@ export default function LauncherModal({ isOpen, initialContext, onClose }) {
   const [launching,    setLaunching]    = useState(false)
   const [error,        setError]        = useState(null)
 
-  const { getTerminalIds, openTerminal, addTerminalPane } = useTerminal()
+  const { openNewPane, setLaunchOverride } = useTerminal()
 
   useEffect(() => {
     if (!isOpen) return
@@ -113,7 +120,7 @@ export default function LauncherModal({ isOpen, initialContext, onClose }) {
       setError(null)
       try {
         const command = contextTitle
-          ? `claude --context "${contextTitle.replace(/"/g, '\\"')}"`
+          ? `claude ${shQuote(contextTitle)}`
           : 'claude'
         const res = await fetch(`${API_BASE}/api/launch`, {
           method: 'POST',
@@ -140,11 +147,9 @@ export default function LauncherModal({ isOpen, initialContext, onClose }) {
       return
     }
 
-    const existingPanes = getTerminalIds(projectId)
-    if (existingPanes.length === 0) {
-      openTerminal(projectId)
-    } else {
-      addTerminalPane(projectId)
+    const terminalId = openNewPane(projectId)
+    if (contextTitle.trim()) {
+      setLaunchOverride(terminalId, contextTitle.trim())
     }
     onClose()
   }

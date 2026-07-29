@@ -12,6 +12,7 @@ export function TerminalProvider({ children }) {
   const terminalReadersRef  = useRef({})
   const terminalLineCountRef = useRef({})
   const paneCounterRef      = useRef({})
+  const launchOverridesRef  = useRef({})
 
   function getTerminalIds(projectId) {
     return projectTerminals.get(projectId) ?? []
@@ -31,18 +32,42 @@ export function TerminalProvider({ children }) {
   }
 
   function addTerminalPane(projectId) {
-    setProjectTerminals(prev => {
-      const existing = prev.get(projectId) ?? []
-      const next = new Map(prev)
-      if (existing.length === 0) {
+    const existing = projectTerminals.get(projectId) ?? []
+    if (existing.length === 0) {
+      setProjectTerminals(prev => {
+        const next = new Map(prev)
         next.set(projectId, [projectId])
         return next
-      }
-      const count = (paneCounterRef.current[projectId] ?? 0) + 1
-      paneCounterRef.current[projectId] = count
-      next.set(projectId, [...existing, `${projectId}::${count}`])
+      })
+      return projectId
+    }
+    const count = (paneCounterRef.current[projectId] ?? 0) + 1
+    paneCounterRef.current[projectId] = count
+    const newId = `${projectId}::${count}`
+    setProjectTerminals(prev => {
+      const next = new Map(prev)
+      next.set(projectId, [...(prev.get(projectId) ?? []), newId])
       return next
     })
+    return newId
+  }
+
+  // Always allocates a brand-new suffixed terminalId, never the bare
+  // projectId slot — used when a command must reach a freshly spawned PTY.
+  // The suffix must be collision-free against whatever the server already
+  // has, not just a locally-incrementing counter: sessions persist across
+  // reloads/restarts, so a fresh client's counter can restart at ::1 and
+  // land on a suffix the server already holds a live PTY under, silently
+  // reconnecting to it instead of spawning — dropping the launch command
+  // exactly like the bare-projectId case this function exists to avoid.
+  function openNewPane(projectId) {
+    const newId = `${projectId}::${crypto.randomUUID()}`
+    setProjectTerminals(prev => {
+      const next = new Map(prev)
+      next.set(projectId, [...(prev.get(projectId) ?? []), newId])
+      return next
+    })
+    return newId
   }
 
   function closeTerminalPane(terminalId) {
@@ -59,6 +84,7 @@ export function TerminalProvider({ children }) {
     delete terminalFocusRef.current[terminalId]
     delete terminalReadersRef.current[terminalId]
     delete terminalLineCountRef.current[terminalId]
+    delete launchOverridesRef.current[terminalId]
   }
 
   function closeTerminal(projectId) {
@@ -83,6 +109,14 @@ export function TerminalProvider({ children }) {
     const cmd = pendingCommandsRef.current[id] ?? null
     delete pendingCommandsRef.current[id]
     return cmd
+  }
+
+  function setLaunchOverride(id, command) {
+    launchOverridesRef.current[id] = command
+  }
+
+  function getLaunchOverride(id) {
+    return launchOverridesRef.current[id] ?? null
   }
 
   function registerTerminal(id, writeFn) {
@@ -132,8 +166,9 @@ export function TerminalProvider({ children }) {
   return (
     <TerminalContext.Provider value={{
       projectTerminals, getTerminalIds,
-      openTerminal, addTerminalPane, closeTerminalPane, closeTerminal,
+      openTerminal, addTerminalPane, openNewPane, closeTerminalPane, closeTerminal,
       sendCommand, consumePendingCommand,
+      setLaunchOverride, getLaunchOverride,
       registerTerminal, unregisterTerminal,
       registerTerminalFocus, unregisterTerminalFocus,
       registerTerminalReader, unregisterTerminalReader,
