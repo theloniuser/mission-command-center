@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import ProjectTile from '../components/tiles/ProjectTile.jsx'
 import TempProjectTile from '../components/tiles/TempProjectTile.jsx'
+import TerminalWorkspace from '../components/tiles/TerminalWorkspace.jsx'
 import { useSession } from '../context/SessionContext.jsx'
+import { useTerminal } from '../context/TerminalContext.jsx'
 
-const STATUS_ORDER = { active: 0, idle: 1, closed: 2 }
+const TILE_ORDER_KEY = 'tile-order'
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 export default function Dashboard() {
@@ -35,16 +37,34 @@ export default function Dashboard() {
     return () => window.removeEventListener('temp-project-created', fetchTempProjects)
   }, [])
 
+  // Fixed order (config/project order) — status is shown via the tile badge instead
+  // of driving position, so a tile never swaps places mid-conversation just because
+  // a session crossed the active/idle/closed time threshold.
+  const [tileOrder, setTileOrder] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(TILE_ORDER_KEY) || '[]') } catch { return [] }
+  })
+  const { getTerminalIds } = useTerminal()
+
+  // Saved order wins; projects not yet in it (new ones) keep config order at the end
   const tiles = useMemo(() => {
     const sessionMap = Object.fromEntries(sessions.map(s => [s.projectId, s]))
-    return projects
-      .map((p, i) => ({ ...p, _idx: i, ...(sessionMap[p.id] ?? {}) }))
-      .sort((a, b) => {
-        const so = (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2)
-        if (so !== 0) return so
-        return a._idx - b._idx  // stable within each status group — no jumping on poll
-      })
-  }, [projects, sessions])
+    const merged = projects.map(p => ({ ...p, ...(sessionMap[p.id] ?? {}) }))
+    const rank = id => { const i = tileOrder.indexOf(id); return i === -1 ? Infinity : i }
+    return merged.map((p, i) => ({ p, i })).sort((a, b) => rank(a.p.id) - rank(b.p.id) || a.i - b.i).map(x => x.p)
+  }, [projects, sessions, tileOrder])
+
+  // Tiles with an open terminal render in the workspace, so step over them when moving
+  function moveTile(id, dir) {
+    const visible = tiles.filter(t => getTerminalIds(t.id).length === 0).map(t => t.id)
+    const at = visible.indexOf(id)
+    const swapWith = visible[at + dir]
+    if (at === -1 || swapWith === undefined) return
+    const next = tiles.map(t => t.id)
+    const a = next.indexOf(id), b = next.indexOf(swapWith)
+    ;[next[a], next[b]] = [next[b], next[a]]
+    setTileOrder(next)
+    try { localStorage.setItem(TILE_ORDER_KEY, JSON.stringify(next)) } catch {}
+  }
 
   const loading = projLoading || sessLoading
 
@@ -54,6 +74,8 @@ export default function Dashboard() {
         <div className="page-heading">
           <h1>Current Projects</h1>
         </div>
+
+        <TerminalWorkspace projects={tiles} />
 
         {loading ? (
           <div className="tile-grid">
@@ -79,7 +101,7 @@ export default function Dashboard() {
               />
             ))}
             {tiles.map(p => (
-              <ProjectTile key={p.id} project={p} />
+              <ProjectTile key={p.id} project={p} onMove={dir => moveTile(p.id, dir)} />
             ))}
           </div>
         )}

@@ -10,6 +10,10 @@ const GLOBAL_SETTINGS = join(_claudeHome, '.claude', 'settings.json')
 const ACTIVE_MS = 5 * 60 * 1000
 const IDLE_MS   = 30 * 60 * 1000
 
+const PENDING_TOOL_MS    = 20 * 1000
+const INTERACTIVE_TOOLS  = new Set(['AskUserQuestion', 'ExitPlanMode'])
+const LONG_RUNNING_TOOLS = new Set(['Agent', 'Task', 'Workflow', 'Monitor', 'TaskOutput', 'ScheduleWakeup'])
+
 const PRICING = {
   sonnet: { input: 3/1e6,    output: 15/1e6,  cacheWrite: 3.75/1e6,  cacheRead: 0.30/1e6 },
   opus:   { input: 15/1e6,   output: 75/1e6,  cacheWrite: 18.75/1e6, cacheRead: 1.50/1e6 },
@@ -132,11 +136,25 @@ function scanSession(projectPath, projectId, projectName) {
   // (stop_reason 'end_turn'), not a mid-turn tool_use waiting on a tool result —
   // otherwise a slow tool call (Agent/Task, Workflow, WebFetch, long Bash) reads
   // as "needs response" for as long as it's still running.
+  //
+  // Also "needs response": a pending tool_use that is waiting on the user — either an
+  // always-interactive tool (AskUserQuestion, ExitPlanMode), or any other tool whose
+  // result hasn't arrived after PENDING_TOOL_MS (a permission prompt). Heuristic: a
+  // genuinely slow Bash call can trip it; subagent/background tools are excluded.
   let needsResponse = false
   for (let i = lines.length - 1; i >= 0; i--) {
     let entry
     try { entry = JSON.parse(lines[i]) } catch { continue }
-    if (entry.type === 'assistant') { needsResponse = entry.message?.stop_reason === 'end_turn'; break }
+    if (entry.type === 'assistant') {
+      if (entry.message?.stop_reason === 'end_turn') {
+        needsResponse = true
+      } else if (entry.message?.stop_reason === 'tool_use' && Array.isArray(entry.message.content)) {
+        const names = entry.message.content.filter(b => b.type === 'tool_use').map(b => b.name)
+        needsResponse = names.some(n => INTERACTIVE_TOOLS.has(n)) ||
+          (age >= PENDING_TOOL_MS && names.length > 0 && !names.some(n => LONG_RUNNING_TOOLS.has(n)))
+      }
+      break
+    }
     if (entry.type === 'user') { needsResponse = false; break }
   }
 

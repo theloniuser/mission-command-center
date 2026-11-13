@@ -4,7 +4,6 @@ import ChangelogPanel from '../changelog/ChangelogPanel.jsx'
 import { useAudio, SOUNDS } from '../../hooks/useAudio.js'
 import { useSession } from '../../context/SessionContext.jsx'
 import { useTerminal } from '../../context/TerminalContext.jsx'
-import TerminalPane from './TerminalPane.jsx'
 
 const THRESHOLD_80K  = 80000
 const THRESHOLD_120K = 120000
@@ -24,118 +23,7 @@ function gaugeColor(pct) {
   return GAUGE_COLORS.healthy
 }
 
-function PaneStatusBar({ terminalId, project, onAddPane, onClose, isMinimized, onToggleMinimize }) {
-  const { sendCommand, getTerminalContent, getTerminalLineCount } = useTerminal()
-  const tokens = project.token_count ?? 0
-  const status = project.status ?? 'no session'
-
-  const [confirmCompact, setConfirmCompact] = useState(false)
-  const compactTimer = useRef(null)
-
-  const [handoffPhase, setHandoffPhase] = useState('idle')
-  const handoffTimer = useRef(null)
-  const handoffMarkerRef = useRef(0)
-
-  const [confirmClose, setConfirmClose] = useState(false)
-  const closeTimer = useRef(null)
-
-  useEffect(() => () => { clearTimeout(compactTimer.current); clearTimeout(handoffTimer.current); clearTimeout(closeTimer.current) }, [])
-
-  function handleCompactClick() {
-    if (confirmCompact) {
-      sendCommand(terminalId, '/compact')
-      setConfirmCompact(false)
-      clearTimeout(compactTimer.current)
-    } else {
-      setConfirmCompact(true)
-      clearTimeout(compactTimer.current)
-      compactTimer.current = setTimeout(() => setConfirmCompact(false), 3000)
-    }
-  }
-
-  function handleHandoffClick() {
-    if (handoffPhase === 'idle') {
-      setHandoffPhase('confirm')
-      clearTimeout(handoffTimer.current)
-      handoffTimer.current = setTimeout(() => setHandoffPhase('idle'), 3000)
-    } else if (handoffPhase === 'confirm') {
-      handoffMarkerRef.current = getTerminalLineCount(terminalId)
-      sendCommand(terminalId, '/session-handoff')
-      setHandoffPhase('copy')
-      clearTimeout(handoffTimer.current)
-    } else if (handoffPhase === 'copy' || handoffPhase === 'copied') {
-      // /session-handoff is often typed directly into the CLI rather than triggered via the
-      // confirm click above, so handoffMarkerRef may never be set — and the scrollback can
-      // contain earlier mentions of "Session Handoff" (e.g. the skill's own template text).
-      // Always take the LAST heading match in the buffer, never the first.
-      const extractHandoff = (source) => {
-        const matches = [...source.matchAll(/^.*Session Handoff.*$/gim)]
-        return matches.length ? source.slice(matches[matches.length - 1].index) : null
-      }
-      const scoped = getTerminalContent(terminalId, handoffMarkerRef.current)
-      const text = extractHandoff(scoped) ?? extractHandoff(getTerminalContent(terminalId)) ?? scoped
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => {
-          setHandoffPhase('copied')
-          handoffTimer.current = setTimeout(() => setHandoffPhase('idle'), 2000)
-        })
-      } else {
-        const ta = document.createElement('textarea')
-        ta.value = text
-        ta.style.cssText = 'position:fixed;top:-9999px'
-        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta)
-        setHandoffPhase('copied')
-        handoffTimer.current = setTimeout(() => setHandoffPhase('idle'), 2000)
-      }
-    }
-  }
-
-  return (
-    <div className={`tile-status-bar${isMinimized ? ' tile-status-bar--minimized' : ''}`}>
-      <span className="tsb-name">{project.name}</span>
-      <span className="tsb-divider" />
-      <span className={`tsb-badge status-${status.replace(' ', '-')}`}>{status}</span>
-      <span className="tsb-divider" />
-      <span className="tsb-item">{project.agent_type ?? 'Claude Code'}</span>
-      <span className="tsb-divider" />
-      <span className="tsb-item">{project.model ?? '—'}</span>
-      <span className="tsb-divider" />
-      <span className="tsb-item">{tokens > 0 ? `${tokens.toLocaleString()} tokens` : '—'}</span>
-      <span className="tsb-divider" />
-      <span className={`tsb-cmd-btn${confirmCompact ? ' tsb-cmd-btn--confirm' : ''}`} role="button" onClick={handleCompactClick}>
-        {confirmCompact ? 'confirm?' : '/compact'}
-      </span>
-      <span className={`tsb-cmd-btn${handoffPhase !== 'idle' ? ' tsb-cmd-btn--confirm' : ''}`} role="button" onClick={handleHandoffClick}>
-        {handoffPhase === 'idle'    && '/handoff'}
-        {handoffPhase === 'confirm' && 'confirm?'}
-        {handoffPhase === 'copy'    && 'copy handoff'}
-        {handoffPhase === 'copied'  && '✓ copied'}
-      </span>
-      <span className="tsb-cmd-btn" role="button" onClick={onAddPane} title="Add a new session pane">+session</span>
-      <button className="tsb-minimize" onClick={onToggleMinimize} title={isMinimized ? 'Restore session' : 'Minimize session'} aria-label={isMinimized ? 'Restore session' : 'Minimize session'}>
-        <span className="tsb-chevron">{isMinimized ? '∨' : '∧'}</span>
-      </button>
-      <button
-        className={`tsb-close${confirmClose ? ' tsb-cmd-btn--confirm' : ''}`}
-        onClick={() => {
-          if (confirmClose) {
-            clearTimeout(closeTimer.current)
-            onClose()
-          } else {
-            setConfirmClose(true)
-            clearTimeout(closeTimer.current)
-            closeTimer.current = setTimeout(() => setConfirmClose(false), 3000)
-          }
-        }}
-        aria-label="Close session"
-      >
-        {confirmClose ? 'close?' : '✕'}
-      </button>
-    </div>
-  )
-}
-
-export default function ProjectTile({ project }) {
+export default function ProjectTile({ project, onMove }) {
   const tokens = project.token_count ?? 0
   const pct = Math.min(tokens / THRESHOLD_150K, 1)
   const status = project.status ?? 'no session'
@@ -151,19 +39,16 @@ export default function ProjectTile({ project }) {
   const [audioEnabled, setAudioEnabled] = useState(audioPrefs.enabled !== false)
   const [selectedSound, setSelectedSound] = useState(audioPrefs.sound || 'chime')
 
-  const { getTerminalIds, openTerminal, addTerminalPane, closeTerminalPane, sendCommand, getLaunchOverride, activeChangelogId, openChangelog } = useTerminal()
-  const terminalIds = getTerminalIds(project.id)
-  const isExpanded = terminalIds.length > 0
-  const [minimizedPanes, setMinimizedPanes] = useState(new Set())
+  const { getTerminalIds, openTerminal, sendCommand, activeChangelogId, openChangelog } = useTerminal()
+  const isExpanded = getTerminalIds(project.id).length > 0
 
-  function toggleMinimize(terminalId) {
-    setMinimizedPanes(prev => {
-      const next = new Set(prev)
-      if (next.has(terminalId)) next.delete(terminalId)
-      else next.add(terminalId)
-      return next
-    })
-  }
+  // The pane status bar edits the same prefs while this tile is hidden; resync on return
+  useEffect(() => {
+    if (isExpanded) return
+    const prefs = getPrefs()
+    setAudioEnabled(prefs.enabled !== false)
+    setSelectedSound(prefs.sound || 'chime')
+  }, [isExpanded])
   const showChangelog = activeChangelogId === project.id
   const changelogRef = useRef(null)
 
@@ -175,26 +60,10 @@ export default function ProjectTile({ project }) {
 
   const { alerts, dismiss } = useSession()
   const myAlerts = alerts.filter(a => a.projectId === project.id)
-  const alertsKey = myAlerts.map(a => a.id).join(',')
-  const seenAlertIdsRef  = useRef(null)
   const prevNeedsRespRef = useRef(null)
 
-  // Token-threshold alerts (warn/critical) get the urgent alarm sound; inactivity
-  // alerts (info) are shown in the sidebar list below but stay silent — "no new
-  // JSONL activity for N minutes" isn't a reliable signal that Claude needs input.
-  useEffect(() => {
-    if (seenAlertIdsRef.current === null) {
-      seenAlertIdsRef.current = new Set(myAlerts.map(a => a.id))
-      return
-    }
-    const newOnes = myAlerts.filter(a => !seenAlertIdsRef.current.has(a.id))
-    newOnes.forEach(a => seenAlertIdsRef.current.add(a.id))
-    if (newOnes.some(a => a.type === 'warn' || a.type === 'critical')) {
-      const prefs = getPrefs()
-      if (prefs.enabled !== false) play('alarm')
-    }
-  }, [alertsKey, myAlerts, play, getPrefs])
-
+  // Only sound: the chime when Claude is done or waiting on input (needs_response).
+  // Token-threshold and inactivity alerts show in the sidebar list but stay silent.
   useEffect(() => {
     const nowNeeds = !!project.needs_response
     if (prevNeedsRespRef.current !== null && nowNeeds && !prevNeedsRespRef.current) {
@@ -221,32 +90,8 @@ export default function ProjectTile({ project }) {
     play(e.target.value)
   }
 
-  if (isExpanded) {
-    return (
-      <article className="project-tile project-tile--expanded">
-        <div className="tile-color-bar" style={{ background: project.color }} />
-        {terminalIds.map((terminalId) => {
-          const minimized = minimizedPanes.has(terminalId)
-          return (
-            <div key={terminalId} className={`terminal-pane-wrapper${minimized ? ' terminal-pane-minimized' : ''}`}>
-              <TerminalPane projectPath={project.path} projectId={project.id} terminalId={terminalId} launchCommand={project.launch_command} pasteText={getLaunchOverride(terminalId)} accentColor={project.color} />
-              <PaneStatusBar
-                terminalId={terminalId}
-                project={project}
-                onAddPane={() => addTerminalPane(project.id)}
-                onClose={async () => {
-                  try { await fetch(`/api/terminal/${encodeURIComponent(terminalId)}`, { method: 'DELETE' }) } catch {}
-                  closeTerminalPane(terminalId)
-                }}
-                isMinimized={minimized}
-                onToggleMinimize={() => toggleMinimize(terminalId)}
-              />
-            </div>
-          )
-        })}
-      </article>
-    )
-  }
+  // Open panes render in TerminalWorkspace; the hooks above keep running so alert sounds still fire
+  if (isExpanded) return null
 
   return (
     <article className="project-tile">
@@ -256,6 +101,14 @@ export default function ProjectTile({ project }) {
         <div className="tile-header">
           <h2 className="tile-project-name">{project.name}</h2>
           <div className="tile-header-actions">
+            {onMove && (
+              <>
+                <button className="tile-terminal-btn" onClick={() => onMove(-1)}
+                  aria-label={`Move ${project.name} earlier`} title="Move earlier">&larr;</button>
+                <button className="tile-terminal-btn" onClick={() => onMove(1)}
+                  aria-label={`Move ${project.name} later`} title="Move later">&rarr;</button>
+              </>
+            )}
             <button
               className="tile-terminal-btn"
               onClick={() => openTerminal(project.id)}

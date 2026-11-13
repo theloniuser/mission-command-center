@@ -27,19 +27,24 @@ export function scanChangelogs(projectPath) {
   const dir = expandPath(projectPath)
   if (!dir || !existsSync(dir)) return []
 
-  let files
-  try {
-    files = readdirSync(dir).filter(f => /^changes\..+\.md$/.test(f))
-  } catch {
-    return []
+  // changelogs/ is the home; the project root is read too for projects not yet migrated
+  const files = []
+  for (const base of [join(dir, 'changelogs'), dir]) {
+    try {
+      for (const f of readdirSync(base)) {
+        if (/^changes\..+\.md$/.test(f)) files.push({ base, filename: f })
+      }
+    } catch {
+      // folder missing or unreadable
+    }
   }
 
   return files
-    .map(filename => {
+    .map(({ base, filename }) => {
       const date = parseDate(filename)
       let content = ''
       try {
-        content = readFileSync(join(dir, filename), 'utf8')
+        content = readFileSync(join(base, filename), 'utf8')
       } catch {
         return null
       }

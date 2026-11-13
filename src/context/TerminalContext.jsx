@@ -1,10 +1,16 @@
 import { createContext, useContext, useRef, useState } from 'react'
+import {
+  initialPaneState, paneIdsFor, ensurePane, toggleProject, closePane, closeProject,
+  dockRight as dockRightState, undock as undockState, toggleMinimize as toggleMinimizeState,
+  prunePanes, dockPane as dockPaneState, movePane as movePaneState,
+} from './paneState.js'
 
 const TerminalContext = createContext(null)
 
 export function TerminalProvider({ children }) {
-  // Map<projectId, terminalId[]> — first terminalId always === projectId for compat
-  const [projectTerminals, setProjectTerminals] = useState(new Map())
+  // Pane/dock state lives in paneState.js (pure, unit-verified); first terminalId of a project
+  // is the bare projectId for compat, extra panes are projectId::<suffix>
+  const [paneState, setPaneState] = useState(initialPaneState)
   const [activeChangelogId, setActiveChangelogId] = useState(null)
   const pendingCommandsRef  = useRef({})
   const terminalWritersRef  = useRef({})
@@ -15,40 +21,23 @@ export function TerminalProvider({ children }) {
   const launchOverridesRef  = useRef({})
 
   function getTerminalIds(projectId) {
-    return projectTerminals.get(projectId) ?? []
+    return paneIdsFor(paneState, projectId)
   }
 
   function openTerminal(projectId) {
-    setProjectTerminals(prev => {
-      const existing = prev.get(projectId) ?? []
-      const next = new Map(prev)
-      if (existing.length > 0) {
-        next.delete(projectId)
-      } else {
-        next.set(projectId, [projectId])
-      }
-      return next
-    })
+    setPaneState(prev => toggleProject(prev, projectId))
   }
 
   function addTerminalPane(projectId) {
-    const existing = projectTerminals.get(projectId) ?? []
+    const existing = paneIdsFor(paneState, projectId)
     if (existing.length === 0) {
-      setProjectTerminals(prev => {
-        const next = new Map(prev)
-        next.set(projectId, [projectId])
-        return next
-      })
+      setPaneState(prev => ensurePane(prev, projectId))
       return projectId
     }
     const count = (paneCounterRef.current[projectId] ?? 0) + 1
     paneCounterRef.current[projectId] = count
     const newId = `${projectId}::${count}`
-    setProjectTerminals(prev => {
-      const next = new Map(prev)
-      next.set(projectId, [...(prev.get(projectId) ?? []), newId])
-      return next
-    })
+    setPaneState(prev => ensurePane(prev, newId))
     return newId
   }
 
@@ -62,24 +51,12 @@ export function TerminalProvider({ children }) {
   // exactly like the bare-projectId case this function exists to avoid.
   function openNewPane(projectId) {
     const newId = `${projectId}::${crypto.randomUUID()}`
-    setProjectTerminals(prev => {
-      const next = new Map(prev)
-      next.set(projectId, [...(prev.get(projectId) ?? []), newId])
-      return next
-    })
+    setPaneState(prev => ensurePane(prev, newId))
     return newId
   }
 
   function closeTerminalPane(terminalId) {
-    const projectId = terminalId.includes('::') ? terminalId.split('::')[0] : terminalId
-    setProjectTerminals(prev => {
-      const existing = prev.get(projectId) ?? []
-      const filtered = existing.filter(id => id !== terminalId)
-      const next = new Map(prev)
-      if (filtered.length === 0) next.delete(projectId)
-      else next.set(projectId, filtered)
-      return next
-    })
+    setPaneState(prev => closePane(prev, terminalId))
     delete terminalWritersRef.current[terminalId]
     delete terminalFocusRef.current[terminalId]
     delete terminalReadersRef.current[terminalId]
@@ -88,11 +65,37 @@ export function TerminalProvider({ children }) {
   }
 
   function closeTerminal(projectId) {
-    setProjectTerminals(prev => {
-      const next = new Map(prev)
-      next.delete(projectId)
-      return next
-    })
+    setPaneState(prev => closeProject(prev, projectId))
+  }
+
+  function pruneToProjects(liveProjectIds) {
+    setPaneState(prev => prunePanes(prev, liveProjectIds))
+  }
+
+  function focusTerminal(id) {
+    terminalFocusRef.current[id]?.()
+  }
+
+  function dockRight(anchorId, pickedId) {
+    setPaneState(prev => dockRightState(prev, anchorId, pickedId))
+    setTimeout(() => focusTerminal(pickedId), 50)
+  }
+
+  function dockPane(id) {
+    setPaneState(prev => dockPaneState(prev, id))
+    setTimeout(() => focusTerminal(id), 50)
+  }
+
+  function undock(id) {
+    setPaneState(prev => undockState(prev, id))
+  }
+
+  function movePane(id, dir) {
+    setPaneState(prev => movePaneState(prev, id, dir))
+  }
+
+  function toggleMinimize(id) {
+    setPaneState(prev => toggleMinimizeState(prev, id))
   }
 
   function sendCommand(id, command) {
@@ -100,7 +103,9 @@ export function TerminalProvider({ children }) {
     if (writer) {
       writer(command + '\r')
     } else {
-      openTerminal(id)
+      // ensurePane, not openTerminal: openTerminal toggles by project key, which closes
+      // every pane when the project already has some and mis-keys suffixed ids
+      setPaneState(prev => ensurePane(prev, id))
       pendingCommandsRef.current[id] = command
     }
   }
@@ -165,8 +170,13 @@ export function TerminalProvider({ children }) {
 
   return (
     <TerminalContext.Provider value={{
-      projectTerminals, getTerminalIds,
+      panes: paneState.panes,
+      dockedIds: paneState.docked,
+      minimizedIds: paneState.minimized,
+      paneState,
+      getTerminalIds,
       openTerminal, addTerminalPane, openNewPane, closeTerminalPane, closeTerminal,
+      dockRight, dockPane, undock, movePane, toggleMinimize, focusTerminal, pruneToProjects,
       sendCommand, consumePendingCommand,
       setLaunchOverride, getLaunchOverride,
       registerTerminal, unregisterTerminal,
