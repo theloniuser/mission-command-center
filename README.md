@@ -6,6 +6,31 @@ It's built and maintained by [Arc Design Studio](mailto:build@arcdesignstudio.co
 
 ---
 
+## See it in action
+
+![Command Center walkthrough](docs/walkthrough.gif)
+
+[Watch the full-quality video (MP4)](docs/walkthrough.mp4)
+
+## Features at a glance
+
+| | Feature | What it does for you |
+|---|---------|----------------------|
+| 1 | **One tab, every project** | A tile per project shows whether its AI session is active, idle, or closed, plus the model, token count, and estimated cost. |
+| 2 | **Token gauge and nudges** | A bar fills as a session's context grows, and the tile suggests `/compact` or a handoff before the session gets sluggish. |
+| 3 | **Terminal in the browser** | Click the terminal icon on a tile to launch your AI assistant. Your session survives a page refresh. |
+| 4 | **Several sessions per project** | Hit `+session` to open another terminal for the same project. |
+| 5 | **Dock side by side** | Dock up to 3 sessions next to each other, minimize them, and return them to full width any time. |
+| 6 | **One-click `/compact` and `/handoff`** | Buttons on every terminal send the command for you. `/handoff` also copies the summary so you can paste it into a fresh session. |
+| 7 | **"Needs response" alerts** | The tile tells you when a session is waiting on you, including when it is stuck on a permission prompt or a question. Pick one of 5 alert sounds per project. |
+| 8 | **Reorder tiles** | Move tiles left and right. The order is remembered, and tiles never jump around on their own. |
+| 9 | **Changelog feed** | Each tile shows that project's recent change notes, read from `changes.*.md` files (a `changelogs/` folder or the project root). |
+| 10 | **Task list** | A simple built-in to-do list in the sidebar. Add tasks and close them out as you go. |
+| 11 | **Light and dark themes** | Switch with one click, or apply your own colors and logo under Settings. |
+| 12 | **Zero cloud, zero accounts** | Everything runs on your own machine. Nothing leaves it unless you choose to connect something. |
+
+---
+
 ## Prerequisites
 
 - Node.js 18+
@@ -48,8 +73,9 @@ The path is used to detect active Claude Code sessions and scan for changelog fi
 
 **Starter** — free, open source, fully self-serve. Everything below is included out of the box: no code is gated, no license key, no config beyond what's in this README. Good fit if you work solo or on a small team and just want one browser tab that shows what's running and lets you launch more of it.
 
-- Project tiles with live session status
-- In-browser terminal (multi-pane)
+- Project tiles with live session status and a token gauge
+- In-browser terminal with multiple sessions per project, side-by-side docking, and one-click `/compact` and `/handoff`
+- Reorderable tiles (order is remembered)
 - Changelog feed (`changes.*.md` viewer)
 - Per-project audio alerts (5 tones) when a session needs a response or hits a threshold
 - Local task list
