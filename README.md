@@ -12,6 +12,8 @@ It's built and maintained by [Arc Design Studio](mailto:build@arcdesignstudio.co
 
 [Watch the full-quality video (MP4)](docs/walkthrough.mp4)
 
+https://github.com/user-attachments/assets/ce8892f6-2d9a-44ec-ac5f-10bdea126d0f
+
 ## Features at a glance
 
 | | Feature | What it does for you |
