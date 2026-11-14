@@ -189,3 +189,9 @@ Custom mode is fully self-serve — build your own token file and point the logo
 **Custom Action fields don't seem to do anything** — expected for now. See the Custom Action note under Settings above; there's no capture button wired up in Starter yet.
 
 **Port conflict** — Express runs on 3002, Vite on 5173. Kill with: `lsof -ti:3002 | xargs kill` or `lsof -ti:5173 | xargs kill`.
+
+---
+
+## License
+
+MIT. See [LICENSE](LICENSE).

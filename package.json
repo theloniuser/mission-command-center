@@ -1,6 +1,7 @@
 {
   "name": "mission-command-center",
   "version": "1.0.0",
+  "license": "MIT",
   "description": "Local dashboard for Claude Code power users — monitor sessions, manage tasks, and launch terminals from one browser tab",
   "type": "module",
   "scripts": {
