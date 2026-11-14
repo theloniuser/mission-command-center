@@ -49,9 +49,10 @@ export default function SettingsForm({ settings, onSaved }) {
       <section className="settings-section">
         <h2 className="settings-section-title">Dashboard</h2>
         <div className="form-group">
-          <label>Title</label>
+          <label htmlFor="settings-title">Title</label>
           <input
             className="form-input"
+            id="settings-title"
             name="title"
             value={form.title || ''}
             onChange={e => { setForm(f => ({ ...f, title: e.target.value })); setSaved(false) }}
@@ -65,10 +66,11 @@ export default function SettingsForm({ settings, onSaved }) {
         <h2 className="settings-section-title">Alert Thresholds</h2>
         <div className="threshold-grid">
           <div className="form-group">
-            <label>Compact nudge <span>(tokens)</span></label>
+            <label htmlFor="settings-compact-threshold">Compact nudge <span>(tokens)</span></label>
             <input
               className="form-input"
               type="number"
+              id="settings-compact-threshold"
               name="compact_threshold"
               value={form.alerts.compact_threshold}
               onChange={handleAlerts}
@@ -77,10 +79,11 @@ export default function SettingsForm({ settings, onSaved }) {
             />
           </div>
           <div className="form-group">
-            <label>Handoff warning <span>(tokens)</span></label>
+            <label htmlFor="settings-handoff-threshold">Handoff warning <span>(tokens)</span></label>
             <input
               className="form-input"
               type="number"
+              id="settings-handoff-threshold"
               name="handoff_threshold"
               value={form.alerts.handoff_threshold}
               onChange={handleAlerts}
@@ -89,10 +92,11 @@ export default function SettingsForm({ settings, onSaved }) {
             />
           </div>
           <div className="form-group">
-            <label>Full protocol <span>(tokens)</span></label>
+            <label htmlFor="settings-protocol-threshold">Full protocol <span>(tokens)</span></label>
             <input
               className="form-input"
               type="number"
+              id="settings-protocol-threshold"
               name="protocol_threshold"
               value={form.alerts.protocol_threshold}
               onChange={handleAlerts}
@@ -101,10 +105,11 @@ export default function SettingsForm({ settings, onSaved }) {
             />
           </div>
           <div className="form-group">
-            <label>Inactivity <span>(minutes)</span></label>
+            <label htmlFor="settings-inactivity-timeout">Inactivity <span>(minutes)</span></label>
             <input
               className="form-input"
               type="number"
+              id="settings-inactivity-timeout"
               name="inactivity_timeout"
               value={form.alerts.inactivity_timeout}
               onChange={handleAlerts}
@@ -118,9 +123,10 @@ export default function SettingsForm({ settings, onSaved }) {
       <section className="settings-section">
         <h2 className="settings-section-title">Custom Action</h2>
         <div className="form-group">
-          <label>Button label</label>
+          <label htmlFor="settings-name">Button label</label>
           <input
             className="form-input"
+            id="settings-name"
             name="name"
             value={form.customAction.name}
             onChange={handleCustomAction}
@@ -128,9 +134,10 @@ export default function SettingsForm({ settings, onSaved }) {
           />
         </div>
         <div className="form-group">
-          <label>Endpoint URL</label>
+          <label htmlFor="settings-endpoint-url">Endpoint URL</label>
           <input
             className="form-input"
+            id="settings-endpoint-url"
             name="endpoint_url"
             value={form.customAction.endpoint_url}
             onChange={handleCustomAction}
@@ -138,9 +145,10 @@ export default function SettingsForm({ settings, onSaved }) {
           />
         </div>
         <div className="form-group">
-          <label>API key env var <span>(name only -- never the value)</span></label>
+          <label htmlFor="settings-api-key-env-var">API key env var <span>(name only -- never the value)</span></label>
           <input
             className="form-input"
+            id="settings-api-key-env-var"
             name="api_key_env_var"
             value={form.customAction.api_key_env_var}
             onChange={handleCustomAction}
@@ -153,9 +161,10 @@ export default function SettingsForm({ settings, onSaved }) {
       <section className="settings-section">
         <h2 className="settings-section-title">Brand</h2>
         <div className="form-group">
-          <label>Theme mode</label>
+          <label htmlFor="settings-theme-mode">Theme mode</label>
           <select
             className="form-select"
+            id="settings-theme-mode"
             name="theme_mode"
             value={form.brand.theme_mode}
             onChange={handleBrand}
@@ -168,9 +177,10 @@ export default function SettingsForm({ settings, onSaved }) {
         {form.brand.theme_mode === 'Custom' && (
           <>
             <div className="form-group">
-              <label>Token CSS path <span>(absolute path to .css file)</span></label>
+              <label htmlFor="settings-token-css-path">Token CSS path <span>(absolute path to .css file)</span></label>
               <input
                 className="form-input"
+                id="settings-token-css-path"
                 name="token_css_path"
                 value={form.brand.token_css_path}
                 onChange={handleBrand}
@@ -178,9 +188,10 @@ export default function SettingsForm({ settings, onSaved }) {
               />
             </div>
             <div className="form-group">
-              <label>Logo path <span>(absolute path to .svg, .png, or .jpg)</span></label>
+              <label htmlFor="settings-logo-path">Logo path <span>(absolute path to .svg, .png, or .jpg)</span></label>
               <input
                 className="form-input"
+                id="settings-logo-path"
                 name="logo_path"
                 value={form.brand.logo_path}
                 onChange={handleBrand}
@@ -188,9 +199,10 @@ export default function SettingsForm({ settings, onSaved }) {
               />
             </div>
             <div className="form-group">
-              <label>Primary color <span>(optional hex override)</span></label>
+              <label htmlFor="settings-primary-color">Primary color <span>(optional hex override)</span></label>
               <input
                 className="form-input"
+                id="settings-primary-color"
                 name="primary_color"
                 value={form.brand.primary_color}
                 onChange={handleBrand}

@@ -112,9 +112,10 @@ export default function ProjectsConfig({ projects, onRefresh }) {
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
-              <label>Name</label>
+              <label htmlFor="project-name">Name</label>
               <input
                 className="form-input"
+                id="project-name"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
@@ -123,10 +124,11 @@ export default function ProjectsConfig({ projects, onRefresh }) {
               />
             </div>
             <div className="form-group">
-              <label>Path</label>
+              <label htmlFor="project-path">Path</label>
               <div className="form-input-row">
                 <input
                   className="form-input"
+                  id="project-path"
                   name="path"
                   value={form.path}
                   onChange={handleChange}
@@ -146,9 +148,10 @@ export default function ProjectsConfig({ projects, onRefresh }) {
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Launch command <span>(optional)</span></label>
+              <label htmlFor="project-launch-command">Launch command <span>(optional)</span></label>
               <input
                 className="form-input"
+                id="project-launch-command"
                 name="launch_command"
                 value={form.launch_command}
                 onChange={handleChange}
@@ -156,10 +159,11 @@ export default function ProjectsConfig({ projects, onRefresh }) {
               />
             </div>
             <div className="form-group" style={{ flex: '0 0 auto' }}>
-              <label>Color</label>
+              <label htmlFor="project-color">Color</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', height: '36px' }}>
                 <input
                   type="color"
+                  id="project-color"
                   name="color"
                   value={form.color}
                   onChange={handleChange}

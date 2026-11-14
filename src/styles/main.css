@@ -4,6 +4,10 @@
   --hub-accent-soft:  rgba(183, 91, 0, 0.10);
   --hub-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.20);
   --hub-overlay:      rgba(0, 0, 0, 0.45);
+}
+
+/* Fallback only: zero specificity so generic-tokens.css (or a Custom brand file) wins */
+:where(:root) {
   --color-on-accent:  var(--color-charcoal);
 }
 
@@ -676,7 +680,7 @@ html:not([data-theme="dark"]) .terminal-pane-card {
 
 html:not([data-theme="dark"]) .tile-status-bar {
   background: #efefee;
-  color: rgba(0,0,0,0.55);
+  color: rgba(0,0,0,0.68);
   border-top-color: rgba(0,0,0,0.08);
 }
 
@@ -766,7 +770,7 @@ html:not([data-theme="dark"]) .tsb-minimize:hover {
 
 html:not([data-theme="dark"]) .tsb-cmd-btn {
   border-color: rgba(0,0,0,0.15);
-  color: rgba(0,0,0,0.45);
+  color: rgba(0,0,0,0.68);
 }
 
 html:not([data-theme="dark"]) .tsb-cmd-btn:hover {
