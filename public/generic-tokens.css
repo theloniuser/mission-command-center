@@ -12,8 +12,8 @@
   --color-border-h:   rgba(15, 23, 42, 0.18);
 
   --color-text:       #0f172a;
-  --color-text-fade:  rgba(15, 23, 42, 0.55);
-  --color-text-muted: rgba(15, 23, 42, 0.38);
+  --color-text-fade:  rgba(15, 23, 42, 0.68);
+  --color-text-muted: rgba(15, 23, 42, 0.62);
 
   --color-accent:     #6366f1;
   --color-accent-h:   #4f46e5;
@@ -27,7 +27,7 @@
   --color-near-black:  #0f172a;
   --color-charcoal:    #1e293b;
   --color-orange:      #6366f1;
-  --color-orange-ui:   #6366f1;
+  --color-orange-ui:   #4f46e5;
   --color-blue:        #0ea5e9;
 
   /* Typography */
@@ -104,8 +104,8 @@
   --color-border-h:   rgba(241, 245, 249, 0.18);
 
   --color-text:       #f1f5f9;
-  --color-text-fade:  rgba(241, 245, 249, 0.55);
-  --color-text-muted: rgba(241, 245, 249, 0.38);
+  --color-text-fade:  rgba(241, 245, 249, 0.72);
+  --color-text-muted: rgba(241, 245, 249, 0.62);
 
   --color-accent:     #818cf8;
   --color-accent-h:   #a5b4fc;

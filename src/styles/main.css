@@ -405,7 +405,7 @@ body {
 
 .tile-status-badge.status-active { color: var(--color-orange-ui); }
 .tile-status-badge.status-idle   { color: var(--hub-text-fade); }
-.tile-status-badge.status-closed { color: var(--hub-text-fade); opacity: 0.5; }
+.tile-status-badge.status-closed { color: var(--color-text-muted); }
 
 .tile-meta {
   display: flex;
@@ -1485,3 +1485,12 @@ html[data-theme="dark"] .eyebrow {
   cursor: pointer;
 }
 .tsb-audio-select option { color: var(--color-charcoal); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

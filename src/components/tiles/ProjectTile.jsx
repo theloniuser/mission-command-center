@@ -189,6 +189,7 @@ export default function ProjectTile({ project, onMove }) {
               value={selectedSound}
               onChange={handleSoundChange}
               title="Alert sound"
+              aria-label="Alert sound"
             >
               {SOUNDS.map(s => (
                 <option key={s.id} value={s.id}>{s.label}</option>
