@@ -119,7 +119,7 @@ export default function ProjectsConfig({ projects, onRefresh }) {
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                placeholder="ADS-skills"
+                placeholder="my-project"
                 required
               />
             </div>
@@ -132,7 +132,7 @@ export default function ProjectsConfig({ projects, onRefresh }) {
                   name="path"
                   value={form.path}
                   onChange={handleChange}
-                  placeholder="~/ai-cli-projects/..."
+                  placeholder="~/projects/my-project"
                   required
                 />
                 <button

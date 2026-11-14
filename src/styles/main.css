@@ -1,7 +1,7 @@
 /* Local tokens not in generic-tokens.css — all hub-* vars come from generic-tokens.css */
 :root {
-  --hub-focus-ring:   0 0 0 2px rgba(183, 91, 0, 0.12);
-  --hub-accent-soft:  rgba(183, 91, 0, 0.10);
+  --hub-focus-ring:   0 0 0 2px rgba(79, 70, 229, 0.12);
+  --hub-accent-soft:  rgba(79, 70, 229, 0.10);
   --hub-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.20);
   --hub-overlay:      rgba(0, 0, 0, 0.45);
 }
