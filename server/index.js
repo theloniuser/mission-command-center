@@ -558,13 +558,37 @@ wss.on('error', (err) => {
 
 // ── Start ─────────────────────────────────────────────────
 
+// Only a leftover Command Center server from this same folder is safe to stop automatically.
+// Anything else holding the port belongs to another app, so explain and exit instead.
+function staleOwnServerPids() {
+  try {
+    const pids = execSync(`lsof -ti:${PORT} -sTCP:LISTEN`, { encoding: 'utf8' }).split('\n').filter(Boolean)
+    const ours = pids.filter(pid => {
+      const cmd = execSync(`ps -p ${pid} -o command=`, { encoding: 'utf8' })
+      const cwd = execSync(`lsof -a -p ${pid} -d cwd -Fn`, { encoding: 'utf8' })
+        .split('\n').find(l => l.startsWith('n'))?.slice(1)
+      return cmd.includes('server/index.js') && cwd === process.cwd()
+    })
+    return ours.length === pids.length ? ours : []
+  } catch {
+    return []
+  }
+}
+
 let _bindAttempted = false
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE' && !_bindAttempted) {
     _bindAttempted = true
-    console.log(`[server] port ${PORT} in use — killing stale process and retrying`)
-    try { execSync(`lsof -ti:${PORT} | xargs kill -9 2>/dev/null || true`, { stdio: 'ignore' }) } catch {}
-    setTimeout(() => server.listen(PORT), 500)
+    const pids = staleOwnServerPids()
+    if (pids.length) {
+      console.log(`[server] port ${PORT} held by an earlier Command Center server; stopping it and retrying`)
+      try { execSync(`kill ${pids.join(' ')}`, { stdio: 'ignore' }) } catch {}
+      setTimeout(() => server.listen(PORT), 800)
+      return
+    }
+    console.error(`[server] Port ${PORT} is already in use by another program.`)
+    console.error(`[server] Stop that program, or start Command Center on a different port: PORT=3012 npm run dev`)
+    process.exit(1)
   } else {
     console.error('[server error]', err)
     process.exit(1)

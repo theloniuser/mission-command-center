@@ -33,6 +33,7 @@ https://github.com/user-attachments/assets/ce8892f6-2d9a-44ec-ac5f-10bdea126d0f
 
 - Node.js 18+
 - npm
+- macOS works out of the box. On Linux, also run `npm rebuild node-pty` after `npm install` so the in-browser terminal can build its native module. Windows is untested.
 
 ---
 
@@ -188,7 +189,9 @@ Custom mode is fully self-serve — build your own token file and point the logo
 
 **Custom Action fields don't seem to do anything** — expected for now. See the Custom Action note under Settings above; there's no capture button wired up in Starter yet.
 
-**Port conflict** — Express runs on 3002, Vite on 5173. Kill with: `lsof -ti:3002 | xargs kill` or `lsof -ti:5173 | xargs kill`.
+**Port conflict** — The server runs on 3002 and Vite on 5173. If another program already uses 3002, the server stops with a message instead of touching that program. Start on a different port with `PORT=3012 npm run dev`. If an earlier Command Center from the same folder is still running, it is stopped and replaced automatically.
+
+**Terminal won't open on Linux** — run `npm rebuild node-pty`, then restart with `npm run dev`.
 
 ---
 

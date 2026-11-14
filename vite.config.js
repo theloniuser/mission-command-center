@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const API_PORT = process.env.PORT || 3002
+
 export default defineConfig({
   plugins: [react()],
   base: '/mission-command-center/',
@@ -9,11 +11,11 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3002',
+        target: `http://localhost:${API_PORT}`,
         changeOrigin: true,
       },
       '/terminal': {
-        target: 'ws://localhost:3002',
+        target: `ws://localhost:${API_PORT}`,
         changeOrigin: true,
         ws: true,
         timeout: 0,
